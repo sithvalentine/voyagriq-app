@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://voyagriq.com';
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${origin}/auth/callback`,
         },
       });
 
@@ -105,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (response.ok) {
                 const { url } = await response.json();
-                if (url) {
+                if (url && typeof window !== 'undefined') {
                   window.location.href = url;
                   return { error: null };
                 }
@@ -121,7 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Only redirect to trips if we didn't redirect to Stripe
       // Redirect to trips page
-      window.location.href = '/trips';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/trips';
+      }
       return { error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -191,8 +194,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = async (email: string) => {
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://voyagriq.com';
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${origin}/reset-password`,
       });
 
       return { error };
