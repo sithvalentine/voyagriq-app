@@ -1,15 +1,12 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
-import { useAuth } from '@/contexts/AuthContext';
 
 function RegisterContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { signUp } = useAuth();
   const tierParam = searchParams.get('tier') as SubscriptionTier | null;
   const selectedTier = tierParam || 'starter';
   const tierInfo = SUBSCRIPTION_TIERS[selectedTier];
@@ -98,58 +95,66 @@ function RegisterContent() {
 
     setLoading(true);
 
-    // Sign up the user with Supabase
+    // NEW APPROACH: Don't create Supabase account yet!
+    // Instead, redirect to Stripe with registration data in metadata
+    // The account will be created AFTER successful payment via webhook
+
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-    const { error, data } = await signUp(formData.email, formData.password, fullName);
 
-    if (error) {
-      console.error('Signup error:', error);
-      setErrors({ general: error.message });
-      setLoading(false);
-      return;
-    }
+    try {
+      console.log('[register] Selected tier:', selectedTier);
+      console.log('[register] Tier from URL param:', tierParam);
+      console.log('[register] Creating checkout session for tier:', selectedTier);
 
-    // Redirect to Stripe Checkout immediately after registration
-    // Email verification will happen in the background
-    if (data?.user) {
-      console.log('User created, redirecting to Stripe...', data.user.id);
-      console.log('Selected tier:', selectedTier);
-      try {
-        const response = await fetch('/api/stripe/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tier: selectedTier, userId: data.user.id }),
-        });
-
-        console.log('Stripe checkout response:', response.status);
-
-        if (response.ok) {
-          const { url } = await response.json();
-          console.log('Stripe checkout URL:', url);
-          if (url) {
-            // Redirect to Stripe Checkout
-            window.location.href = url;
-            return;
+      // Create Stripe checkout session with registration data
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: selectedTier,
+          // Pass registration data - account will be created after payment
+          registrationData: {
+            email: formData.email,
+            password: formData.password,
+            fullName: fullName,
+            agencyName: formData.agencyName || null
           }
-        } else {
-          const errorData = await response.json();
-          console.error('Stripe checkout error:', errorData);
-          setErrors({ general: 'Failed to create checkout session. Please try again.' });
-          setLoading(false);
+        }),
+      });
+
+      console.log('[register] Stripe checkout response:', response.status);
+
+      if (response.ok) {
+        const { url } = await response.json();
+        console.log('Stripe checkout URL:', url);
+        if (url) {
+          // Store registration details for post-payment messaging
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('voyagriq-pending-registration', JSON.stringify({
+              email: formData.email,
+              tier: selectedTier,
+              timestamp: Date.now()
+            }));
+          }
+
+          // Redirect to Stripe Checkout
+          // No account exists yet - it will be created after payment
+          window.location.href = url;
           return;
         }
-      } catch (checkoutError) {
-        console.error('Error creating checkout session:', checkoutError);
-        setErrors({ general: 'Failed to redirect to payment. Please try again.' });
+      } else {
+        const errorData = await response.json();
+        console.error('Stripe checkout error:', errorData);
+        setErrors({ general: errorData.error || 'Failed to create checkout session. Please try again.' });
         setLoading(false);
         return;
       }
+    } catch (checkoutError) {
+      console.error('Error creating checkout session:', checkoutError);
+      setErrors({ general: 'Failed to redirect to payment. Please try again.' });
+      setLoading(false);
+      return;
     }
-
-    // Fallback: if no user data returned (shouldn't happen)
-    console.error('No user data returned from signup');
-    alert(`Welcome! Your ${tierInfo.name} account has been created. Please check your email to verify your account.`);
-    router.push('/login?message=Please check your email to verify your account');
   };
 
   return (

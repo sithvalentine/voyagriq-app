@@ -17,7 +17,16 @@ export const STRIPE_PRICES = {
   premium: process.env.STRIPE_PRICE_PREMIUM || '', // $199/month
 };
 
+// Log loaded price IDs on startup
+console.log('[stripe] Loaded price IDs:', {
+  starter: process.env.STRIPE_PRICE_STARTER,
+  standard: process.env.STRIPE_PRICE_STANDARD,
+  premium: process.env.STRIPE_PRICE_PREMIUM,
+});
+
 // Map tier names to Stripe price IDs
 export function getStripePriceId(tier: 'starter' | 'standard' | 'premium'): string {
-  return STRIPE_PRICES[tier];
+  const priceId = STRIPE_PRICES[tier];
+  console.log(`[stripe] Getting price ID for tier '${tier}':`, priceId);
+  return priceId;
 }
