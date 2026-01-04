@@ -55,13 +55,8 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Allow debug and utility pages to bypass all checks FIRST (for development/testing)
-  if (req.nextUrl.pathname.startsWith('/debug-login') ||
-      req.nextUrl.pathname.startsWith('/debug-state') ||
-      req.nextUrl.pathname.startsWith('/dev-login') ||
-      req.nextUrl.pathname.startsWith('/enable-dev-mode') ||
-      req.nextUrl.pathname.startsWith('/disable-dev-mode') ||
-      req.nextUrl.pathname.startsWith('/clear-session')) {
+  // Allow utility pages to bypass all checks (for clearing session issues)
+  if (req.nextUrl.pathname.startsWith('/clear-session')) {
     return response;
   }
 
@@ -100,33 +95,24 @@ export async function middleware(req: NextRequest) {
 
   // SECURITY: Check if user has paid (prevents "back button" bypass)
   // Users must complete Stripe checkout before accessing protected pages
-  // This check runs in BOTH development and production to ensure payment security
-  // UNLESS dev mode is enabled via cookie (development only)
   if (isProtectedPath && user) {
-    // Check for dev mode bypass (only works in development environment)
-    const devModeCookie = req.cookies.get('voyagriq-dev-mode');
-    const isDevMode = process.env.NODE_ENV === 'development' && devModeCookie?.value === 'true';
-
     // Allow access to setup-subscription page (where they pay)
     if (req.nextUrl.pathname.startsWith('/setup-subscription') ||
         req.nextUrl.pathname.startsWith('/subscription/success')) {
       return response;
     }
 
-    // Skip payment check if in dev mode
-    if (!isDevMode) {
-      // Check if user has completed payment (has stripe_customer_id)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('stripe_customer_id, subscription_tier')
-        .eq('id', user.id)
-        .single();
+    // Check if user has completed payment (has stripe_customer_id)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('stripe_customer_id, subscription_tier')
+      .eq('id', user.id)
+      .single();
 
-      // If no stripe_customer_id, they haven't paid yet - force them to payment
-      if (profile && !profile.stripe_customer_id) {
-        const tier = profile.subscription_tier || 'starter';
-        return NextResponse.redirect(new URL(`/setup-subscription?tier=${tier}`, req.url));
-      }
+    // If no stripe_customer_id, they haven't paid yet - force them to payment
+    if (profile && !profile.stripe_customer_id) {
+      const tier = profile.subscription_tier || 'starter';
+      return NextResponse.redirect(new URL(`/setup-subscription?tier=${tier}`, req.url));
     }
   }
 
