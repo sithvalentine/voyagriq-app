@@ -14,6 +14,8 @@ interface VendorStats {
   tripCount: number;
   avgSpendPerTrip: number;
   trips: Trip[];
+  totalRevenue: number; // Commission earned from this vendor
+  profitMargin: number; // Revenue to cost ratio percentage
 }
 
 export default function VendorsPage() {
@@ -70,11 +72,20 @@ export default function VendorsPage() {
               tripCount: 0,
               avgSpendPerTrip: 0,
               trips: [],
+              totalRevenue: 0,
+              profitMargin: 0,
             });
           }
           const stats = statsMap.get(vendor)!;
           stats.categories.add(category);
           stats.totalSpend += cost;
+
+          // Calculate proportional revenue from this vendor's cost
+          const tripRevenue = trip.Agency_Revenue || 0;
+          const tripTotalCost = trip.Trip_Total_Cost || 1; // Avoid division by zero
+          const proportionalRevenue = (cost / tripTotalCost) * tripRevenue;
+          stats.totalRevenue += proportionalRevenue;
+
           if (!stats.trips.find(t => t.Trip_ID === trip.Trip_ID)) {
             stats.tripCount += 1;
             stats.trips.push(trip);
@@ -83,9 +94,10 @@ export default function VendorsPage() {
       });
     });
 
-    // Calculate averages
+    // Calculate averages and profit margins
     statsMap.forEach(stats => {
       stats.avgSpendPerTrip = stats.tripCount > 0 ? stats.totalSpend / stats.tripCount : 0;
+      stats.profitMargin = stats.totalSpend > 0 ? (stats.totalRevenue / stats.totalSpend) * 100 : 0;
     });
 
     return Array.from(statsMap.values());
@@ -139,6 +151,18 @@ export default function VendorsPage() {
     [totalSpend, filteredVendors]
   );
 
+  const totalRevenue = useMemo(() =>
+    filteredVendors.reduce((sum, v) => sum + v.totalRevenue, 0),
+    [filteredVendors]
+  );
+
+  const avgProfitMargin = useMemo(() =>
+    filteredVendors.length > 0
+      ? filteredVendors.reduce((sum, v) => sum + v.profitMargin, 0) / filteredVendors.length
+      : 0,
+    [filteredVendors]
+  );
+
   // Show welcome screen if no data
   if (trips.length === 0) {
     return (
@@ -184,17 +208,24 @@ export default function VendorsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center mb-2">
-          <span className="text-3xl mr-3">🏢</span>
-          <h1 className="text-3xl font-bold text-gray-900">Vendor Management</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center mb-2">
+              <span className="text-3xl mr-3">💰</span>
+              <h1 className="text-3xl font-bold text-gray-900">Vendor Profitability Analysis</h1>
+            </div>
+            <p className="text-gray-600">
+              Analyze vendor performance, costs, revenue, and profit margins
+            </p>
+          </div>
+          <Link href="/trips" className="text-purple-600 hover:text-purple-700 font-medium">
+            ← Back to Trips
+          </Link>
         </div>
-        <p className="text-gray-600">
-          Analyze your vendor relationships and spending patterns
-        </p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Total Vendors</div>
           <div className="text-3xl font-bold text-purple-600">{filteredVendors.length}</div>
@@ -204,13 +235,19 @@ export default function VendorsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Total Spend</div>
           <div className="text-3xl font-bold text-gray-900">{formatCurrencyWithSymbol(totalSpend, currency)}</div>
-          <div className="text-xs text-gray-500 mt-1">Across all vendors</div>
+          <div className="text-xs text-gray-500 mt-1">Vendor costs</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="text-sm font-medium text-gray-500 mb-1">Avg Per Vendor</div>
-          <div className="text-3xl font-bold text-gray-900">{formatCurrencyWithSymbol(avgSpendPerVendor, currency)}</div>
-          <div className="text-xs text-gray-500 mt-1">Average spending</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">Total Revenue</div>
+          <div className="text-3xl font-bold text-green-600">{formatCurrencyWithSymbol(totalRevenue, currency)}</div>
+          <div className="text-xs text-gray-500 mt-1">Commission earned</div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-sm font-medium text-gray-500 mb-1">Avg Profit Margin</div>
+          <div className="text-3xl font-bold text-blue-600">{avgProfitMargin.toFixed(1)}%</div>
+          <div className="text-xs text-gray-500 mt-1">Revenue to cost</div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -321,13 +358,16 @@ export default function VendorsPage() {
                   Total Spend
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Revenue
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Profit Margin
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trip Count
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Avg Per Trip
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  % of Total
                 </th>
               </tr>
             </thead>
@@ -355,16 +395,25 @@ export default function VendorsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-bold text-green-600">
+                      {formatCurrencyWithSymbol(vendor.totalRevenue, currency)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className={`text-sm font-bold ${
+                      vendor.profitMargin >= 15 ? 'text-green-600' :
+                      vendor.profitMargin >= 10 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {vendor.profitMargin.toFixed(1)}%
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="text-sm text-gray-900">{vendor.tripCount}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="text-sm text-gray-600">
                       {formatCurrencyWithSymbol(vendor.avgSpendPerTrip, currency)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="text-sm font-semibold text-purple-600">
-                      {totalSpend > 0 ? ((vendor.totalSpend / totalSpend) * 100).toFixed(1) : 0}%
                     </div>
                   </td>
                 </tr>
@@ -377,6 +426,57 @@ export default function VendorsPage() {
       {sortedVendors.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">No vendors match your filters</p>
+        </div>
+      )}
+
+      {/* Insights Section */}
+      {sortedVendors.length > 0 && (
+        <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Key Insights</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg p-4">
+              <div className="font-semibold text-gray-900 mb-2">Most Profitable Vendor</div>
+              {(() => {
+                const bestMargin = [...sortedVendors].sort((a, b) => b.profitMargin - a.profitMargin)[0];
+                return bestMargin ? (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-bold text-green-600">{bestMargin.vendor}</span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {bestMargin.profitMargin.toFixed(1)}% profit margin
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div className="bg-white rounded-lg p-4">
+              <div className="font-semibold text-gray-900 mb-2">Highest Revenue Vendor</div>
+              {(() => {
+                const bestRevenue = [...sortedVendors].sort((a, b) => b.totalRevenue - a.totalRevenue)[0];
+                return bestRevenue ? (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-bold text-blue-600">{bestRevenue.vendor}</span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatCurrencyWithSymbol(bestRevenue.totalRevenue, currency)} in commission
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div className="bg-white rounded-lg p-4">
+              <div className="font-semibold text-gray-900 mb-2">Most Used Vendor</div>
+              {(() => {
+                const mostUsed = [...sortedVendors].sort((a, b) => b.tripCount - a.tripCount)[0];
+                return mostUsed ? (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-bold text-purple-600">{mostUsed.vendor}</span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {mostUsed.tripCount} trips
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -34,9 +34,81 @@ export default function TripDetail() {
   const { currency } = useCurrency();
 
   useEffect(() => {
-    const trips = DataStore.getTrips();
-    setAllTrips(trips);
-    setTrip(trips.find(t => t.Trip_ID === tripId));
+    const loadTrip = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          console.log('[Trip Detail] No user found, falling back to localStorage');
+          const trips = DataStore.getTrips();
+          setAllTrips(trips);
+          setTrip(trips.find(t => t.Trip_ID === tripId));
+          return;
+        }
+
+        // Fetch all trips from Supabase for comparison data
+        const { data: dbTrips, error } = await supabase
+          .from('trips')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[Trip Detail] Error loading trips:', error);
+          const trips = DataStore.getTrips();
+          setAllTrips(trips);
+          setTrip(trips.find(t => t.Trip_ID === tripId));
+          return;
+        }
+
+        // Convert database trips to Trip format (same conversion as trips page)
+        const convertedTrips: Trip[] = (dbTrips || []).map((dbTrip: any) => {
+          const tripTotalCost = (dbTrip.trip_total_cost || 0) / 100;
+          const totalTravelers = dbTrip.total_travelers || 1;
+
+          return {
+            Trip_ID: dbTrip.trip_id,
+            Client_Name: dbTrip.client_name,
+            Travel_Agency: dbTrip.travel_agency || '',
+            Start_Date: dbTrip.start_date,
+            End_Date: dbTrip.end_date,
+            Destination_Country: dbTrip.destination_country,
+            Destination_City: dbTrip.destination_city || '',
+            Adults: dbTrip.adults || 0,
+            Children: dbTrip.children || 0,
+            Total_Travelers: totalTravelers,
+            Flight_Cost: (dbTrip.flight_cost || 0) / 100,
+            Hotel_Cost: (dbTrip.hotel_cost || 0) / 100,
+            Ground_Transport: (dbTrip.ground_transport || 0) / 100,
+            Activities_Tours: (dbTrip.activities_tours || 0) / 100,
+            Meals_Cost: (dbTrip.meals_cost || 0) / 100,
+            Insurance_Cost: (dbTrip.insurance_cost || 0) / 100,
+            Other_Costs: (dbTrip.other_costs || 0) / 100,
+            Trip_Total_Cost: tripTotalCost,
+            Cost_Per_Traveler: tripTotalCost / totalTravelers,
+            Currency: dbTrip.currency || 'USD',
+            Commission_Type: dbTrip.commission_rate ? 'percentage' : undefined,
+            Commission_Value: dbTrip.commission_rate || undefined,
+            Agency_Revenue: (dbTrip.commission_amount || 0) / 100,
+            Client_ID: dbTrip.client_id || '',
+            Client_Type: dbTrip.client_type || 'individual',
+            Notes: '',
+          };
+        });
+
+        console.log(`[Trip Detail] Loaded ${convertedTrips.length} trips from database`);
+        setAllTrips(convertedTrips);
+        setTrip(convertedTrips.find(t => t.Trip_ID === tripId));
+      } catch (error) {
+        console.error('[Trip Detail] Error in loadTrip:', error);
+        const trips = DataStore.getTrips();
+        setAllTrips(trips);
+        setTrip(trips.find(t => t.Trip_ID === tripId));
+      }
+    };
+
+    loadTrip();
   }, [tripId]);
 
   const handleExportPDF = () => {
@@ -116,10 +188,43 @@ export default function TripDetail() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!trip) return;
-    DataStore.deleteTrip(trip.Trip_ID);
-    router.push('/trips');
+
+    if (!confirm(`Are you sure you want to delete trip ${trip.Trip_ID}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert('Please log in to delete trips');
+        return;
+      }
+
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('trip_id', trip.Trip_ID);
+
+      if (error) {
+        console.error('Error deleting trip:', error);
+        alert(`Failed to delete trip: ${error.message}`);
+        return;
+      }
+
+      // Also delete from localStorage for backwards compatibility
+      DataStore.deleteTrip(trip.Trip_ID);
+
+      router.push('/trips');
+    } catch (error: any) {
+      console.error('Error deleting trip:', error);
+      alert(`Error: ${error.message}`);
+    }
   };
 
   const handleEditSave = (updatedTrip: Trip) => {

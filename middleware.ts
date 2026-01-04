@@ -65,10 +65,10 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  // Get the session
+  // Get the user (more secure than getSession for server-side)
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Define protected routes that require authentication
   const protectedPaths = [
@@ -91,8 +91,8 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith(path)
   );
 
-  // Redirect to login if accessing protected route without session
-  if (isProtectedPath && !session) {
+  // Redirect to login if accessing protected route without user
+  if (isProtectedPath && !user) {
     const redirectUrl = new URL('/login', req.url);
     redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
@@ -102,7 +102,7 @@ export async function middleware(req: NextRequest) {
   // Users must complete Stripe checkout before accessing protected pages
   // This check runs in BOTH development and production to ensure payment security
   // UNLESS dev mode is enabled via cookie (development only)
-  if (isProtectedPath && session) {
+  if (isProtectedPath && user) {
     // Check for dev mode bypass (only works in development environment)
     const devModeCookie = req.cookies.get('voyagriq-dev-mode');
     const isDevMode = process.env.NODE_ENV === 'development' && devModeCookie?.value === 'true';
@@ -119,7 +119,7 @@ export async function middleware(req: NextRequest) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('stripe_customer_id, subscription_tier')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
       // If no stripe_customer_id, they haven't paid yet - force them to payment
@@ -137,12 +137,12 @@ export async function middleware(req: NextRequest) {
     req.nextUrl.pathname.startsWith(path)
   );
 
-  if (isAuthPath && session) {
+  if (isAuthPath && user) {
     // Check if user has paid
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     // Only redirect to /trips if they've paid

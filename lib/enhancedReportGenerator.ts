@@ -192,15 +192,26 @@ export class EnhancedReportGenerator {
     this.doc.text(title, this.margin, this.currentY);
     this.currentY += 8;
 
+    // Filter out invalid data and ensure values are valid numbers
+    const validData = data.filter(d => d && typeof d.value === 'number' && !isNaN(d.value) && isFinite(d.value));
+
+    if (validData.length === 0) {
+      this.doc.setFontSize(9);
+      this.doc.setTextColor(120, 120, 120);
+      this.doc.text('No valid data available', this.margin, this.currentY);
+      this.currentY += 10;
+      return;
+    }
+
     const chartHeight = 40;
     // Reserve more space for values by limiting chart width further
     const valueSpace = 35; // Space reserved for value text
     const chartWidth = this.pageWidth - 2 * this.margin - 60 - valueSpace;
     const barHeight = 5;
     const spacing = 2;
-    const maxVal = maxValue || Math.max(...data.map(d => d.value));
+    const maxVal = maxValue || Math.max(...validData.map(d => d.value), 1); // Ensure at least 1 to avoid division by zero
 
-    data.slice(0, 5).forEach((item, index) => {
+    validData.slice(0, 5).forEach((item, index) => {
       this.checkPageSpace(barHeight + spacing + 2);
 
       // Label
@@ -211,10 +222,14 @@ export class EnhancedReportGenerator {
 
       // Bar - scale to fit within reserved space
       const barWidth = (item.value / maxVal) * chartWidth;
-      const colors = [this.primaryColor, this.secondaryColor, this.accentColor];
-      const color = colors[index % colors.length];
-      this.doc.setFillColor(...color);
-      this.doc.rect(this.margin + 40, this.currentY, barWidth, barHeight, 'F');
+
+      // Only draw the bar if barWidth is valid
+      if (isFinite(barWidth) && barWidth >= 0) {
+        const colors = [this.primaryColor, this.secondaryColor, this.accentColor];
+        const color = colors[index % colors.length];
+        this.doc.setFillColor(...color);
+        this.doc.rect(this.margin + 40, this.currentY, barWidth, barHeight, 'F');
+      }
 
       // Value - always position in the reserved space to the right of bars
       this.doc.setFontSize(8);
@@ -223,7 +238,8 @@ export class EnhancedReportGenerator {
       // Format as count (plain number) or currency based on parameter
       const valueText = formatAsCount ? item.value.toString() : this.formatCurrency(item.value);
       // Position value in the reserved space, 3 units after the bar
-      const valueX = this.margin + 40 + barWidth + 3;
+      const safeBarWidth = isFinite(barWidth) && barWidth >= 0 ? barWidth : 0;
+      const valueX = this.margin + 40 + safeBarWidth + 3;
       this.doc.text(valueText, valueX, this.currentY + 4);
 
       this.currentY += barHeight + spacing + 2;

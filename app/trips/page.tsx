@@ -10,6 +10,8 @@ import { useTier } from '@/contexts/TierContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatCurrencyWithSymbol } from '@/lib/currency';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
+import BulkImportModal from '@/components/BulkImportModal';
+import QuickAddTripForm from '@/components/QuickAddTripForm';
 import * as XLSX from 'xlsx';
 import { EnhancedReportGenerator, WhiteLabelConfig } from '@/lib/enhancedReportGenerator';
 
@@ -27,13 +29,88 @@ export default function TripsOverview() {
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('tripId');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const { currentTier, isTrialExpired, isSignedIn } = useTier();
   const { currency } = useCurrency();
 
-  // Load trips on mount
+  // Load trips from Supabase on mount
   useEffect(() => {
-    setTrips(DataStore.getTrips());
+    const loadTrips = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          console.log('[Trips] No user found, skipping trip load');
+          return;
+        }
+
+        // Fetch trips from Supabase
+        const { data: dbTrips, error } = await supabase
+          .from('trips')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[Trips] Error loading trips:', error);
+          // Fallback to localStorage
+          setTrips(DataStore.getTrips());
+          return;
+        }
+
+        // Convert database trips to Trip format
+        const convertedTrips: Trip[] = (dbTrips || []).map((dbTrip: any) => {
+          const tripTotalCost = (dbTrip.trip_total_cost || 0) / 100;
+          const totalTravelers = dbTrip.total_travelers || 1;
+
+          return {
+            Trip_ID: dbTrip.trip_id,
+            Client_Name: dbTrip.client_name,
+            Travel_Agency: dbTrip.travel_agency || '',
+            Start_Date: dbTrip.start_date,
+            End_Date: dbTrip.end_date,
+            Destination_Country: dbTrip.destination_country,
+            Destination_City: dbTrip.destination_city || '',
+            Adults: dbTrip.adults || 0,
+            Children: dbTrip.children || 0,
+            Total_Travelers: totalTravelers,
+            Flight_Cost: (dbTrip.flight_cost || 0) / 100, // Convert cents to dollars
+            Hotel_Cost: (dbTrip.hotel_cost || 0) / 100,
+            Ground_Transport: (dbTrip.ground_transport || 0) / 100,
+            Activities_Tours: (dbTrip.activities_tours || 0) / 100,
+            Meals_Cost: (dbTrip.meals_cost || 0) / 100,
+            Insurance_Cost: (dbTrip.insurance_cost || 0) / 100,
+            Other_Costs: (dbTrip.other_costs || 0) / 100,
+            Trip_Total_Cost: tripTotalCost,
+            Cost_Per_Traveler: tripTotalCost / totalTravelers,
+            Currency: dbTrip.currency || 'USD',
+            Commission_Type: dbTrip.commission_rate ? 'percentage' : undefined,
+            Commission_Value: dbTrip.commission_rate || undefined,
+            Agency_Revenue: (dbTrip.commission_amount || 0) / 100, // Convert cents to dollars
+            Client_ID: dbTrip.client_id || '',
+            Client_Type: dbTrip.client_type || 'individual',
+            Notes: '',
+          };
+        });
+
+        console.log(`[Trips] Loaded ${convertedTrips.length} trips from database`);
+        setTrips(convertedTrips);
+      } catch (error) {
+        console.error('[Trips] Error in loadTrips:', error);
+        // Fallback to localStorage
+        setTrips(DataStore.getTrips());
+      }
+    };
+
+    loadTrips();
   }, []);
+
+  // Debug: Track modal state changes
+  useEffect(() => {
+    console.log('[Trips Page] isImportModalOpen changed to:', isImportModalOpen);
+  }, [isImportModalOpen]);
 
   // AUTHENTICATION CHECK - Redirect non-logged-in users to homepage
   useEffect(() => {
@@ -374,95 +451,12 @@ export default function TripsOverview() {
     XLSX.writeFile(wb, `all-trips-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const handleImportCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split('\n').filter(line => line.trim());
-
-      if (lines.length < 2) {
-        alert('CSV file appears to be empty');
-        return;
-      }
-
-      // Parse CSV
-      const headers = lines[0].split(',').map(h => h.trim());
-      const newTrips: Trip[] = [];
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        try {
-          const values = lines[i].split(',').map(v => v.trim());
-          const tripData: any = {};
-
-          headers.forEach((header, index) => {
-            tripData[header] = values[index] || '';
-          });
-
-          // Create trip object with required fields
-          const trip: Trip = {
-            Trip_ID: tripData.Trip_ID || `IMP-${Date.now()}-${i}`,
-            Client_Name: tripData.Client_Name || 'Unknown Client',
-            Travel_Agency: tripData.Travel_Agency || 'Unknown Agency',
-            Start_Date: tripData.Start_Date || new Date().toISOString().split('T')[0],
-            End_Date: tripData.End_Date || new Date().toISOString().split('T')[0],
-            Destination_Country: tripData.Destination_Country || 'Unknown',
-            Destination_City: tripData.Destination_City || 'Unknown',
-            Adults: parseInt(tripData.Adults) || 1,
-            Children: parseInt(tripData.Children) || 0,
-            Total_Travelers: parseInt(tripData.Total_Travelers) || 1,
-            Flight_Cost: parseFloat(tripData.Flight_Cost?.replace(/[^0-9.-]/g, '')) || 0,
-            Hotel_Cost: parseFloat(tripData.Hotel_Cost?.replace(/[^0-9.-]/g, '')) || 0,
-            Ground_Transport: parseFloat(tripData.Ground_Transport?.replace(/[^0-9.-]/g, '')) || 0,
-            Activities_Tours: parseFloat(tripData.Activities_Tours?.replace(/[^0-9.-]/g, '')) || 0,
-            Meals_Cost: parseFloat(tripData.Meals_Cost?.replace(/[^0-9.-]/g, '')) || 0,
-            Insurance_Cost: parseFloat(tripData.Insurance_Cost?.replace(/[^0-9.-]/g, '')) || 0,
-            Other_Costs: parseFloat(tripData.Other_Costs?.replace(/[^0-9.-]/g, '')) || 0,
-            Trip_Total_Cost: parseFloat(tripData.Trip_Total_Cost?.replace(/[^0-9.-]/g, '')) || 0,
-            Cost_Per_Traveler: parseFloat(tripData.Cost_Per_Traveler?.replace(/[^0-9.-]/g, '')) || 0,
-            Agency_Revenue: parseFloat(tripData.Agency_Revenue?.replace(/[^0-9.-]/g, '')) || 0,
-            Commission_Type: tripData.Commission_Type || 'Fixed',
-            Commission_Value: tripData.Commission_Value || '',
-            Notes: tripData.Notes || '',
-            Flight_Vendor: tripData.Flight_Vendor || '',
-            Hotel_Vendor: tripData.Hotel_Vendor || '',
-            Ground_Transport_Vendor: tripData.Ground_Transport_Vendor || '',
-            Activities_Vendor: tripData.Activities_Vendor || '',
-            Insurance_Vendor: tripData.Insurance_Vendor || ''
-          };
-
-          newTrips.push(trip);
-          successCount++;
-        } catch (error) {
-          console.error(`Error parsing line ${i + 1}:`, error);
-          errorCount++;
-        }
-      }
-
-      if (newTrips.length > 0) {
-        const existingTrips = DataStore.getTrips();
-        const allTrips = [...existingTrips, ...newTrips];
-        DataStore.setTrips(allTrips);
-        setTrips(allTrips);
-        alert(`✅ Import Complete!\n\nSuccessfully imported: ${successCount} trips\nErrors: ${errorCount}\n\nThe page will refresh to show your imported data.`);
-        window.location.reload();
-      } else {
-        alert('No valid trips found in CSV file');
-      }
-    };
-
-    reader.onerror = () => {
-      alert('Error reading file');
-    };
-
-    reader.readAsText(file);
-
-    // Reset input
-    event.target.value = '';
+  const handleImportSuccess = () => {
+    // Reload trips from DataStore after successful import
+    setTrips(DataStore.getTrips());
+    setIsImportModalOpen(false);
+    // Optionally refresh the page to ensure all data is in sync
+    window.location.reload();
   };
 
   const handleExportPDF = () => {
@@ -532,18 +526,16 @@ export default function TripsOverview() {
               Add Your First Trip →
             </Link>
 
-            <label className="inline-flex items-center gap-2 px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg shadow-lg cursor-pointer">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold text-lg shadow-lg cursor-pointer"
+              type="button"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              Import from CSV
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleImportCSV}
-                className="hidden"
-              />
-            </label>
+              Import Trips
+            </button>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
@@ -555,6 +547,13 @@ export default function TripsOverview() {
             </ul>
           </div>
         </div>
+
+        {/* Bulk Import Modal */}
+        <BulkImportModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={handleImportSuccess}
+        />
       </div>
     );
   }
@@ -570,18 +569,26 @@ export default function TripsOverview() {
           </p>
         </div>
         <div className="flex gap-3">
-          <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">
+          <button
+            onClick={() => setShowQuickAdd(!showQuickAdd)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-sm cursor-pointer"
+            type="button"
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Import CSV
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleImportCSV}
-              className="hidden"
-            />
-          </label>
+            {showQuickAdd ? 'Cancel' : 'Add Trip'}
+          </button>
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+            type="button"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 1 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Import Trips
+          </button>
           {filteredTrips.length > 0 && (
             <>
               <button
@@ -618,6 +625,17 @@ export default function TripsOverview() {
           )}
         </div>
       </div>
+
+      {/* Quick Add Form */}
+      {showQuickAdd && (
+        <QuickAddTripForm
+          onAdd={(newTrip) => {
+            setTrips([newTrip, ...trips]);
+            setShowQuickAdd(false);
+          }}
+          onCancel={() => setShowQuickAdd(false)}
+        />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -999,6 +1017,13 @@ export default function TripsOverview() {
           </table>
         </div>
       </div>
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={handleImportSuccess}
+      />
     </div>
   );
 }
