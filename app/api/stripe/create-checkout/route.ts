@@ -129,20 +129,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if this tier has a trial
-    // Rules:
-    // - Starter & Standard monthly = 14-day trial
-    // - Starter & Standard annual = NO trial
-    // - Premium = NO trial (monthly or annual)
+    // Check if this tier has a trial (Starter & Standard = yes, Premium = no)
     const tierConfig = SUBSCRIPTION_TIERS[tier as 'starter' | 'standard' | 'premium'];
-    const hasTrial = tierConfig.hasTrial && interval === 'monthly'; // Only offer trial on monthly plans
+    const hasTrial = tierConfig.hasTrial;
     const trialDays = tierConfig.trialDays || 0;
 
     // Create Stripe checkout session configuration
     console.log('[create-checkout] Session metadata being sent to Stripe:', JSON.stringify(sessionMetadata));
     console.log('[create-checkout] Tier value:', tier);
-    console.log('[create-checkout] Billing interval:', interval);
-    console.log('[create-checkout] Has trial:', hasTrial);
     console.log('[create-checkout] Price ID:', priceId);
 
     const sessionConfig: any = {
@@ -163,12 +157,9 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // Only add trial if this tier supports it AND it's monthly billing
+    // Only add trial if this tier supports it
     if (hasTrial && trialDays > 0) {
-      console.log('[create-checkout] Adding trial period:', trialDays, 'days');
       sessionConfig.subscription_data.trial_period_days = trialDays;
-    } else {
-      console.log('[create-checkout] No trial period for this subscription');
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
