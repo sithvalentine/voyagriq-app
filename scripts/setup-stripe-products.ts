@@ -44,12 +44,29 @@ async function setupProducts() {
       },
       metadata: {
         tier: 'starter',
+        billing_interval: 'monthly',
+      },
+    });
+
+    const starterAnnualPrice = await stripe.prices.create({
+      product: starterProduct.id,
+      unit_amount: 58800, // $588.00 in cents ($49 × 12)
+      currency: 'usd',
+      recurring: {
+        interval: 'year',
+        trial_period_days: 14,
+      },
+      metadata: {
+        tier: 'starter',
+        billing_interval: 'annual',
+        bonus_months: '2', // Pay for 12, get 14
       },
     });
 
     console.log('✅ Starter tier created');
     console.log(`   Product ID: ${starterProduct.id}`);
-    console.log(`   Price ID: ${starterPrice.id}\n`);
+    console.log(`   Monthly Price ID: ${starterPrice.id}`);
+    console.log(`   Annual Price ID: ${starterAnnualPrice.id}\n`);
 
     // Create Standard Product
     console.log('Creating Standard tier...');
@@ -73,12 +90,29 @@ async function setupProducts() {
       },
       metadata: {
         tier: 'standard',
+        billing_interval: 'monthly',
+      },
+    });
+
+    const standardAnnualPrice = await stripe.prices.create({
+      product: standardProduct.id,
+      unit_amount: 118800, // $1,188.00 in cents ($99 × 12)
+      currency: 'usd',
+      recurring: {
+        interval: 'year',
+        trial_period_days: 14,
+      },
+      metadata: {
+        tier: 'standard',
+        billing_interval: 'annual',
+        bonus_months: '2', // Pay for 12, get 14
       },
     });
 
     console.log('✅ Standard tier created');
     console.log(`   Product ID: ${standardProduct.id}`);
-    console.log(`   Price ID: ${standardPrice.id}\n`);
+    console.log(`   Monthly Price ID: ${standardPrice.id}`);
+    console.log(`   Annual Price ID: ${standardAnnualPrice.id}\n`);
 
     // Create Premium Product
     console.log('Creating Premium tier...');
@@ -101,12 +135,28 @@ async function setupProducts() {
       },
       metadata: {
         tier: 'premium',
+        billing_interval: 'monthly',
+      },
+    });
+
+    const premiumAnnualPrice = await stripe.prices.create({
+      product: premiumProduct.id,
+      unit_amount: 238800, // $2,388.00 in cents ($199 × 12)
+      currency: 'usd',
+      recurring: {
+        interval: 'year',
+      },
+      metadata: {
+        tier: 'premium',
+        billing_interval: 'annual',
+        bonus_months: '2', // Pay for 12, get 14
       },
     });
 
     console.log('✅ Premium tier created');
     console.log(`   Product ID: ${premiumProduct.id}`);
-    console.log(`   Price ID: ${premiumPrice.id}\n`);
+    console.log(`   Monthly Price ID: ${premiumPrice.id}`);
+    console.log(`   Annual Price ID: ${premiumAnnualPrice.id}\n`);
 
     // Print summary
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -114,9 +164,14 @@ async function setupProducts() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     console.log('📝 Add these to your .env.local file:\n');
+    console.log('# Monthly prices');
     console.log(`STRIPE_PRICE_STARTER=${starterPrice.id}`);
     console.log(`STRIPE_PRICE_STANDARD=${standardPrice.id}`);
     console.log(`STRIPE_PRICE_PREMIUM=${premiumPrice.id}`);
+    console.log('\n# Annual prices (Pay 12 months, get 14)');
+    console.log(`STRIPE_PRICE_STARTER_ANNUAL=${starterAnnualPrice.id}`);
+    console.log(`STRIPE_PRICE_STANDARD_ANNUAL=${standardAnnualPrice.id}`);
+    console.log(`STRIPE_PRICE_PREMIUM_ANNUAL=${premiumAnnualPrice.id}`);
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (error: any) {

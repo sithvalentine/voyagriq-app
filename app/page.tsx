@@ -80,8 +80,11 @@ export default function LandingPage() {
           <h2 className="text-4xl font-bold text-center mb-4">
             Plans That Fit How You Sell Travel
           </h2>
-          <p className="text-xl text-center text-purple-100 mb-12">
+          <p className="text-xl text-center text-purple-100 mb-3">
             Start simple and upgrade as your trips and team grow. No setup fees, no long-term contracts.
+          </p>
+          <p className="text-lg text-center text-yellow-300 font-semibold mb-12">
+            💰 Save big with annual billing: Pay for 12 months, get 14 months!
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">

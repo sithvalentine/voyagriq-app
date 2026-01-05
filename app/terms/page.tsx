@@ -69,21 +69,32 @@ export default function TermsOfService() {
 
               <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.2 Subscription Tiers</h3>
               <p className="text-gray-700 mb-4">
-                We offer three subscription tiers:
+                We offer three subscription tiers with both monthly and annual billing options:
               </p>
               <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
-                <li><strong>Starter ($49/month):</strong> Up to 25 trips per month, single user, core analytics</li>
-                <li><strong>Standard ($99/month):</strong> Up to 50 trips per month, up to 10 users, business intelligence, scheduled reports</li>
-                <li><strong>Premium ($199/month):</strong> Up to 100 trips per month, up to 20 team members, API access, white-label branding, priority support</li>
+                <li><strong>Starter:</strong> $49/month or $588/year - Up to 25 trips per month, single user, core analytics</li>
+                <li><strong>Standard:</strong> $99/month or $1,188/year - Up to 50 trips per month, up to 10 users, business intelligence, scheduled reports</li>
+                <li><strong>Premium:</strong> $199/month or $2,388/year - Up to 100 trips per month, up to 20 team members, API access, white-label branding, priority support</li>
               </ul>
 
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.3 Payment Terms</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.3 Annual Billing Discount</h3>
               <p className="text-gray-700 mb-4">
-                Subscriptions are billed monthly in advance. Payment is due on the same day each month as your subscription start date.
-                All fees are non-refundable except as required by law or as expressly stated in these Terms.
+                Annual subscriptions receive a special bonus: pay for 12 months upfront and receive 14 months of service.
+                This means you get 2 months completely free compared to monthly billing (approximately 14% savings).
               </p>
 
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.4 Cancellation</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.4 Payment Terms</h3>
+              <p className="text-gray-700 mb-4">
+                Subscriptions are billed in advance according to your chosen billing interval (monthly or annual).
+                Payment is due on the same day each billing period as your subscription start date.
+                All fees are non-refundable except as required by law or as expressly stated in these Terms.
+              </p>
+              <p className="text-gray-700 mb-4">
+                When switching from monthly to annual billing, you will receive a prorated credit for any unused time
+                on your monthly subscription, which will be applied to your annual subscription charge.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.5 Cancellation</h3>
               <p className="text-gray-700 mb-4">
                 You may cancel your subscription at any time. Cancellation will take effect at the end of your current billing period.
                 You will retain access to paid features until the end of the billing period.

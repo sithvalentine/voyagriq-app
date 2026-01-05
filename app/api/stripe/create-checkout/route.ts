@@ -8,7 +8,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: NextRequest) {
   try {
-    const { tier, userId, registrationData } = await request.json();
+    const { tier, userId, registrationData, interval = 'monthly' } = await request.json();
 
     if (!tier) {
       return NextResponse.json(
@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
     if (!['starter', 'standard', 'premium'].includes(tier)) {
       return NextResponse.json(
         { error: 'Invalid tier' },
+        { status: 400 }
+      );
+    }
+
+    // Validate interval
+    if (!['monthly', 'annual'].includes(interval)) {
+      return NextResponse.json(
+        { error: 'Invalid billing interval' },
         { status: 400 }
       );
     }
@@ -108,9 +116,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the price ID for this tier
-    console.log('[create-checkout] Getting price ID for tier:', tier);
-    const priceId = getStripePriceId(tier as 'starter' | 'standard' | 'premium');
+    // Get the price ID for this tier and interval
+    console.log('[create-checkout] Getting price ID for tier:', tier, 'interval:', interval);
+    const priceId = getStripePriceId(tier as 'starter' | 'standard' | 'premium', interval as 'monthly' | 'annual');
     console.log('[create-checkout] Retrieved price ID:', priceId);
 
     if (!priceId) {
