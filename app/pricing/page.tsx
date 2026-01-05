@@ -67,6 +67,10 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* DEPLOYMENT TEST MARKER - Jan 5, 2026 - 2:45 PM */}
+      <div className="bg-red-600 text-white text-center py-2 font-bold">
+        🚀 DEPLOYMENT TEST - If you see this, latest code is deployed!
+      </div>
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
