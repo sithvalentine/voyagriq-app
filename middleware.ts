@@ -3,57 +3,67 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          req.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
+  try {
+    let response = NextResponse.next({
+      request: {
+        headers: req.headers,
       },
+    });
+
+    // Skip middleware for static files and API routes that don't need auth
+    if (
+      req.nextUrl.pathname.startsWith('/_next') ||
+      req.nextUrl.pathname.startsWith('/api/webhooks') ||
+      req.nextUrl.pathname.includes('.')
+    ) {
+      return response;
     }
-  );
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return req.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            req.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            req.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+          },
+        },
+      }
+    );
 
   // Allow utility pages to bypass all checks (for clearing session issues)
   if (req.nextUrl.pathname.startsWith('/clear-session')) {
@@ -139,6 +149,11 @@ export async function middleware(req: NextRequest) {
   }
 
   return response;
+  } catch (error) {
+    console.error('[middleware] Error:', error);
+    // On error, allow the request to proceed
+    return NextResponse.next();
+  }
 }
 
 // Specify which routes this middleware should run on
