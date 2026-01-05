@@ -37,6 +37,18 @@ function LoginContent() {
     // If successful, signIn function handles redirect
   };
 
+  const handleDevLogin = async () => {
+    // Enable dev mode first
+    localStorage.setItem('voyagriq-dev-mode', 'true');
+
+    // Auto-fill the dev email and focus on password field
+    setEmail('james@mintgoldwyn.com');
+    setError('');
+
+    // Show success message to user
+    setSuccessMessage('✅ Dev mode enabled! Enter your password and click Sign In.');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12">
       <div className="max-w-md mx-auto px-4">
@@ -130,6 +142,21 @@ function LoginContent() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
+
+            {/* Dev Mode Quick Login */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={handleDevLogin}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-500 transition-all shadow cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔧 Dev Mode Quick Login
+              </button>
+              <p className="mt-2 text-xs text-center text-gray-500">
+                For testing only - Auto-enables dev mode & bypasses Stripe
+              </p>
+            </div>
 
             <p className="mt-6 text-center text-sm text-gray-600">
               Don't have an account?{' '}

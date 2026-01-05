@@ -1,33 +1,16 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Lazy initialization to avoid SSR issues with location
-let supabaseInstance: SupabaseClient | null = null;
-
-function getSupabaseClient() {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      },
-    });
-  }
-  return supabaseInstance;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
 }
 
-// Create a Proxy that lazy-loads the client
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop) {
-    const client = getSupabaseClient();
-    const value = (client as any)[prop];
-    return typeof value === 'function' ? value.bind(client) : value;
-  },
-});
+// Use SSR browser client for proper cookie-based session management
+// This works with both client-side and middleware cookie handling
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // For server-side operations that need elevated permissions
 export const getServiceRoleClient = () => {

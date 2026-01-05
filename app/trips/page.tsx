@@ -123,7 +123,7 @@ export default function TripsOverview() {
   const hasAdvancedFilters = currentTier === 'standard' || currentTier === 'premium';
 
   // Get unique values for filters
-  const agencies = useMemo(() => Array.from(new Set(trips.map(t => t.Travel_Agency).filter((a): a is string => !!a))).sort(), [trips]);
+  const agencies = useMemo(() => Array.from(new Set(trips.map(t => t.Travel_Agency))).sort(), [trips]);
   const countries = useMemo(() => Array.from(new Set(trips.map(t => t.Destination_Country))).sort(), [trips]);
   const vendors = useMemo(() => {
     const allVendors = new Set<string>();
@@ -179,7 +179,7 @@ export default function TripsOverview() {
       filtered = filtered.filter(trip =>
         trip.Trip_ID.toLowerCase().includes(query) ||
         trip.Client_Name.toLowerCase().includes(query) ||
-        (trip.Destination_City || '').toLowerCase().includes(query) ||
+        trip.Destination_City.toLowerCase().includes(query) ||
         trip.Destination_Country.toLowerCase().includes(query)
       );
     }
@@ -212,11 +212,11 @@ export default function TripsOverview() {
           compareValue = a.Client_Name.localeCompare(b.Client_Name);
           break;
         case 'agency':
-          compareValue = (a.Travel_Agency || '').localeCompare(b.Travel_Agency || '');
+          compareValue = a.Travel_Agency.localeCompare(b.Travel_Agency);
           break;
         case 'destination':
-          compareValue = `${a.Destination_City || ''}, ${a.Destination_Country}`.localeCompare(
-            `${b.Destination_City || ''}, ${b.Destination_Country}`
+          compareValue = `${a.Destination_City}, ${a.Destination_Country}`.localeCompare(
+            `${b.Destination_City}, ${b.Destination_Country}`
           );
           break;
         case 'date':
@@ -325,11 +325,11 @@ export default function TripsOverview() {
     const rows = filteredTrips.map(trip => [
       escapeCSV(trip.Trip_ID),
       escapeCSV(trip.Client_Name),
-      escapeCSV(trip.Travel_Agency || ''),
+      escapeCSV(trip.Travel_Agency),
       escapeCSV(trip.Start_Date),
       escapeCSV(trip.End_Date),
       escapeCSV(trip.Destination_Country),
-      escapeCSV(trip.Destination_City || ''),
+      escapeCSV(trip.Destination_City),
       escapeCSV(trip.Adults),
       escapeCSV(trip.Children),
       escapeCSV(trip.Total_Travelers),
@@ -686,7 +686,7 @@ export default function TripsOverview() {
           {(selectedAgencies.length > 0 || selectedCountries.length > 0 || selectedVendors.length > 0 || selectedYear !== 'all' || searchQuery || dateRange.start || dateRange.end) && (
             <button
               onClick={clearFilters}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
             >
               Clear All
             </button>

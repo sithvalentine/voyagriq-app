@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Trip } from '@/data/trips';
 
 export function formatCurrency(amount: number): string {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Trip } from '@/data/trips';
 
 export type SubscriptionTier = 'starter' | 'standard' | 'premium';
