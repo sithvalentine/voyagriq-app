@@ -233,3 +233,4 @@ This is a demo application. Customize and use as needed for your business.
 ---
 
 **Built with Claude Code** 🤖
+# Deployment trigger: 1767650933
