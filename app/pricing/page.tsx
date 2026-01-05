@@ -116,7 +116,7 @@ export default function PricingPage() {
             </div>
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.starter.name}</h2>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline">
                 <span className="text-4xl font-bold">${getDisplayPrice(SUBSCRIPTION_TIERS.starter.price)}</span>
                 <span className="text-blue-100">/{billingInterval === 'annual' ? 'year' : 'month'}</span>
               </div>
@@ -170,7 +170,7 @@ export default function PricingPage() {
 
             <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.standard.name}</h2>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline">
                 <span className="text-4xl font-bold">${getDisplayPrice(SUBSCRIPTION_TIERS.standard.price)}</span>
                 <span className="text-purple-100">/{billingInterval === 'annual' ? 'year' : 'month'}</span>
               </div>
@@ -217,7 +217,7 @@ export default function PricingPage() {
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow">
             <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.premium.name}</h2>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline">
                 <span className="text-4xl font-bold">${getDisplayPrice(SUBSCRIPTION_TIERS.premium.price)}</span>
                 <span className="text-amber-100">/{billingInterval === 'annual' ? 'year' : 'month'}</span>
               </div>
