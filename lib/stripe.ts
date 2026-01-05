@@ -24,7 +24,7 @@ export const STRIPE_PRICES = {
   },
 };
 
-// Log loaded price IDs on startup
+// Log loaded price IDs on startup (includes annual prices)
 console.log('[stripe] Loaded price IDs:', {
   monthly: {
     starter: process.env.STRIPE_PRICE_STARTER,
