@@ -1,5 +1,6 @@
 'use client';
 
+// Force cache invalidation: 2026-01-05
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SUBSCRIPTION_TIERS } from '@/lib/subscription';
