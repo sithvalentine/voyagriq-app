@@ -186,7 +186,7 @@ export default function WhiteLabelSettings() {
                         setLogoPreview('');
                         setConfig({ ...config, logo: '' });
                       }}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      className="text-red-600 hover:text-red-700 text-sm cursor-pointer"
                     >
                       Remove Logo
                     </button>
@@ -371,7 +371,7 @@ export default function WhiteLabelSettings() {
                 <button
                   key={key}
                   onClick={() => handleApplyPreset(key as keyof typeof COLOR_PRESETS)}
-                  className="flex items-center gap-3 p-3 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all"
+                  className="flex items-center gap-3 p-3 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   <div className="flex gap-1">
                     <div
@@ -397,13 +397,13 @@ export default function WhiteLabelSettings() {
           <div className="flex gap-4">
             <button
               onClick={handleSave}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
             >
               {saved ? '✓ Saved!' : 'Save Settings'}
             </button>
             <button
               onClick={handleReset}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors cursor-pointer"
             >
               Reset to Default
             </button>

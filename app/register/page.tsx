@@ -8,7 +8,9 @@ import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
 function RegisterContent() {
   const searchParams = useSearchParams();
   const tierParam = searchParams.get('tier') as SubscriptionTier | null;
+  const intervalParam = searchParams.get('interval') as 'monthly' | 'annual' | null;
   const selectedTier = tierParam || 'starter';
+  const billingInterval = intervalParam || 'monthly';
   const tierInfo = SUBSCRIPTION_TIERS[selectedTier];
   const [loading, setLoading] = useState(false);
 
@@ -112,6 +114,7 @@ function RegisterContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tier: selectedTier,
+          interval: billingInterval,
           // Pass registration data - account will be created after payment
           registrationData: {
             email: formData.email,
@@ -188,13 +191,32 @@ function RegisterContent() {
                     ? 'Unlimited trips per month'
                     : `${tierInfo.tripLimit} trips per month`}
                 </p>
+                {selectedTier !== 'premium' && billingInterval === 'monthly' && (
+                  <p className="text-white/90 text-sm mt-1 font-semibold">
+                    ✨ Includes 14-day free trial
+                  </p>
+                )}
+                {billingInterval === 'annual' && (
+                  <p className="text-white/90 text-sm mt-1 font-semibold">
+                    🎉 Get 2 months free with annual billing!
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <div className="text-4xl font-bold">
-                  {tierInfo.price === 0 ? 'Free' : `$${tierInfo.price}`}
+                  {tierInfo.price === 0
+                    ? 'Free'
+                    : `$${billingInterval === 'annual'
+                        ? Math.round(tierInfo.price * 12 / 14)
+                        : tierInfo.price}`}
                 </div>
                 {tierInfo.price > 0 && (
                   <div className="text-white/90 text-sm">per month</div>
+                )}
+                {billingInterval === 'annual' && tierInfo.price > 0 && (
+                  <div className="text-white/70 text-xs mt-1">
+                    Billed ${tierInfo.price * 12} annually
+                  </div>
                 )}
               </div>
             </div>
@@ -411,12 +433,21 @@ function RegisterContent() {
               disabled={loading}
               className="w-full mt-8 px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating Account...' : (selectedTier === 'premium' ? 'Get Started' : 'Start 14-Day Free Trial')}
+              {loading
+                ? 'Creating Account...'
+                : (selectedTier === 'premium' || billingInterval === 'annual')
+                  ? 'Get Started'
+                  : 'Start 14-Day Free Trial'}
             </button>
 
-            {selectedTier !== 'premium' && (
+            {selectedTier !== 'premium' && billingInterval === 'monthly' && (
               <p className="mt-4 text-center text-sm text-gray-600">
                 Start your 14-day free trial • No credit card required • Cancel anytime
+              </p>
+            )}
+            {billingInterval === 'annual' && (
+              <p className="mt-4 text-center text-sm text-gray-600">
+                Pay for 12 months, get 14 months • Cancel anytime
               </p>
             )}
 

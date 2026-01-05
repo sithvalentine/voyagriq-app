@@ -686,7 +686,7 @@ export default function TripsOverview() {
           {(selectedAgencies.length > 0 || selectedCountries.length > 0 || selectedVendors.length > 0 || selectedYear !== 'all' || searchQuery || dateRange.start || dateRange.end) && (
             <button
               onClick={clearFilters}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
             >
               Clear All
             </button>

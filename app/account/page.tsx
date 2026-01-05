@@ -4,9 +4,13 @@ import Link from 'next/link';
 import { DataStore } from '@/lib/dataStore';
 import { SUBSCRIPTION_TIERS, getNextTier } from '@/lib/subscription';
 import { useTier } from '@/contexts/TierContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 
 export default function AccountPage() {
   const { currentTier, userName, userEmail, trialStartDate, isTrialActive, daysLeftInTrial, setCurrentTier, devMode, toggleDevMode } = useTier();
+  const { user } = useAuth();
+  const [billingLoading, setBillingLoading] = useState(false);
   const tierInfo = SUBSCRIPTION_TIERS[currentTier];
   const nextTier = getNextTier(currentTier);
   const nextTierInfo = nextTier ? SUBSCRIPTION_TIERS[nextTier] : null;
@@ -38,6 +42,67 @@ export default function AccountPage() {
     window.location.href = '/load-sample-data';
   };
 
+  const handleManageBilling = async () => {
+    // Check if in dev mode
+    if (devMode || (typeof window !== 'undefined' && localStorage.getItem('voyagriq-dev-mode') === 'true')) {
+      alert(
+        '🔧 Developer Mode Active\n\n' +
+        'Billing portal is disabled in dev mode.\n\n' +
+        'In production, this would redirect to Stripe\'s billing portal where customers can:\n' +
+        '• Update payment methods\n' +
+        '• View invoices\n' +
+        '• Cancel subscription\n' +
+        '• Update billing info'
+      );
+      return;
+    }
+
+    if (!user) {
+      alert('Please sign in to manage billing');
+      return;
+    }
+
+    setBillingLoading(true);
+    try {
+      const response = await fetch('/api/stripe/create-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create billing portal session');
+      }
+
+      // Redirect to Stripe billing portal
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error('Error opening billing portal:', error);
+      alert(error.message || 'Failed to open billing portal. Please try again.');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user) {
+      alert('Please sign in to cancel subscription');
+      return;
+    }
+
+    const confirmed = confirm(
+      'Are you sure you want to cancel your subscription?\n\n' +
+      'You will still have access until the end of your current billing period.\n\n' +
+      'Click OK to proceed to the billing portal where you can cancel.'
+    );
+
+    if (confirmed) {
+      handleManageBilling();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
@@ -57,7 +122,7 @@ export default function AccountPage() {
             </div>
             <button
               onClick={toggleDevMode}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors cursor-pointer ${
                 devMode
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
@@ -88,7 +153,7 @@ export default function AccountPage() {
                 className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
                   currentTier === 'starter'
                     ? 'bg-blue-600 text-white ring-4 ring-blue-300 cursor-not-allowed'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer'
                 }`}
               >
                 {currentTier === 'starter' ? '✓ ' : ''}Starter
@@ -99,7 +164,7 @@ export default function AccountPage() {
                 className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
                   currentTier === 'standard'
                     ? 'bg-purple-600 text-white ring-4 ring-purple-300 cursor-not-allowed'
-                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-pointer'
                 }`}
               >
                 {currentTier === 'standard' ? '✓ ' : ''}Standard
@@ -110,7 +175,7 @@ export default function AccountPage() {
                 className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
                   currentTier === 'premium'
                     ? 'bg-gradient-to-r from-amber-500 to-pink-500 text-white ring-4 ring-amber-300 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-amber-100 to-pink-100 text-amber-800 hover:from-amber-200 hover:to-pink-200'
+                    : 'bg-gradient-to-r from-amber-100 to-pink-100 text-amber-800 hover:from-amber-200 hover:to-pink-200 cursor-pointer'
                 }`}
               >
                 {currentTier === 'premium' ? '✓ ' : ''}Premium
@@ -130,11 +195,22 @@ export default function AccountPage() {
               </p>
               <button
                 onClick={handleLoadSampleData}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 Load Sample Data
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Advanced Settings - Premium Features (Standard & Premium only) */}
+        {(currentTier === 'standard' || currentTier === 'premium') && (
+          <div className="mb-6">
+            <Link href="/settings">
+              <button className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer shadow-lg">
+                ⚙️ Advanced Settings (Team, Branding, API)
+              </button>
+            </Link>
           </div>
         )}
 
@@ -305,14 +381,22 @@ export default function AccountPage() {
 
           <div className="space-y-3">
             <Link href="/pricing">
-              <button className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+              <button className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors cursor-pointer">
                 Change Plan
               </button>
             </Link>
-            <button className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
-              Manage Billing
+            <button
+              onClick={handleManageBilling}
+              disabled={billingLoading}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {billingLoading ? 'Loading...' : 'Manage Billing'}
             </button>
-            <button className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+            <button
+              onClick={handleCancelSubscription}
+              disabled={billingLoading}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Cancel Subscription
             </button>
           </div>

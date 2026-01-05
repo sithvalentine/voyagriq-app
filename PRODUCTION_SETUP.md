@@ -2,16 +2,24 @@
 
 This guide walks you through deploying VoyagrIQ to production. Follow these steps carefully to ensure a secure launch.
 
-## Pre-Launch Checklist - ALL CRITICAL ISSUES FIXED ✅
+## Pre-Launch Checklist
 
-All critical security and configuration issues have been addressed:
-
+### ✅ COMPLETED - Code & Security
 - ✅ **Stripe Environment Variables**: Configured in `.env.local.example` and `.env.production.example`
 - ✅ **Row Level Security (RLS)**: Database policies created in `supabase/migrations/add_rls_policies.sql`
 - ✅ **Route Protection**: Server-side middleware created in `middleware.ts`
 - ✅ **API Keys**: Moved to secure database storage with hashing
 - ✅ **Tier Limits**: Fixed Standard tier from 50 to 100 trips
 - ✅ **Dev Mode**: Restricted to development environment only
+- ✅ **Code Deployed**: Commit 8e01a5c pushed to production
+- ✅ **Billing Management**: Manage Billing & Cancel buttons working
+
+### ✅ COMPLETED - Annual Pricing Configuration
+- ✅ **Annual Price IDs**: Created manually in Stripe LIVE mode
+- ✅ **Vercel Environment Variables**: Annual price IDs configured
+- ⏳ **Production Testing**: Ready for testing after deployment
+
+**STATUS**: Annual pricing fully configured and ready to deploy!
 
 ---
 
@@ -51,25 +59,49 @@ From your Supabase project settings:
 
 ### 2.2 Create Subscription Products & Prices
 
-In Stripe Dashboard → Products:
+**IMPORTANT**: You need to create BOTH monthly AND annual prices for each tier.
+
+#### Option A: Automated Script (RECOMMENDED - 5 minutes)
+
+1. **Switch to LIVE Stripe key** temporarily in dev environment:
+   ```bash
+   cd "/Users/james/claude/Travel Reporting/trip-cost-insights"
+   # Edit .env.local and replace with your LIVE key (get from Stripe Dashboard)
+   STRIPE_SECRET_KEY=sk_live_[your_live_key_here]
+   ```
+
+2. **Run the setup script**:
+   ```bash
+   npx tsx scripts/setup-stripe-products.ts
+   ```
+
+3. **Copy the output** - Save all 6 price IDs (3 monthly + 3 annual)
+
+4. **IMPORTANT**: Change .env.local back to TEST key after running script
+
+#### Option B: Manual Creation (15 minutes)
+
+In Stripe Dashboard → Products (in LIVE mode):
 
 **Starter Tier:**
 - Product Name: "VoyagrIQ Starter"
-- Price: $49/month (recurring)
-- Trial: 14 days
-- Copy the Price ID (starts with `price_`)
+- Description: "25 trips per month, perfect for solo advisors"
+- **Monthly Price**: $49/month with 14-day trial → Copy Price ID
+- **Annual Price**: $588/year (no trial) → Copy Price ID
 
 **Standard Tier:**
 - Product Name: "VoyagrIQ Standard"
-- Price: $99/month (recurring)
-- Trial: 14 days
-- Copy the Price ID
+- Description: "100 trips per month, ideal for growing teams"
+- **Monthly Price**: $99/month with 14-day trial → Copy Price ID
+- **Annual Price**: $1,188/year (no trial) → Copy Price ID
 
 **Premium Tier:**
 - Product Name: "VoyagrIQ Premium"
-- Price: $199/month (recurring)
-- No trial
-- Copy the Price ID
+- Description: "100 trips per month, white-label reports, API access"
+- **Monthly Price**: $199/month (no trial) → Copy Price ID
+- **Annual Price**: $2,388/year (no trial) → Copy Price ID
+
+**You should have 6 price IDs total** when done.
 
 ### 2.3 Set Up Webhook
 
@@ -125,14 +157,25 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 # Stripe (LIVE keys - NOT test keys!)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_SECRET_KEY=sk_live_...
+
+# Monthly Price IDs (LIVE)
 STRIPE_PRICE_STARTER=price_...
 STRIPE_PRICE_STANDARD=price_...
 STRIPE_PRICE_PREMIUM=price_...
+
+# Annual Price IDs (LIVE) - REQUIRED FOR ANNUAL BILLING
+STRIPE_PRICE_STARTER_ANNUAL=price_...
+STRIPE_PRICE_STANDARD_ANNUAL=price_...
+STRIPE_PRICE_PREMIUM_ANNUAL=price_...
+
+# Webhook Secret
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 # App URL (Your production domain)
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 ```
+
+**CRITICAL**: Without the annual price IDs, the annual billing toggle will not work in production.
 
 ---
 

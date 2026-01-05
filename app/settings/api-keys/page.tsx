@@ -120,12 +120,12 @@ export default function APIKeysPage() {
                 </p>
                 <div className="flex gap-3">
                   <Link href="/pricing">
-                    <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-pink-500 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                    <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-pink-500 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity cursor-pointer">
                       Upgrade to Premium
                     </button>
                   </Link>
                   <Link href="/api-docs">
-                    <button className="px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                    <button className="px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors cursor-pointer">
                       View API Documentation
                     </button>
                   </Link>
@@ -153,7 +153,7 @@ export default function APIKeysPage() {
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors cursor-pointer"
             >
               + Create New Key
             </button>
@@ -169,7 +169,7 @@ export default function APIKeysPage() {
               <div className="text-sm text-blue-700">Check out our comprehensive API documentation</div>
             </div>
             <Link href="/api-docs">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm cursor-pointer">
                 View Docs
               </button>
             </Link>
@@ -190,7 +190,7 @@ export default function APIKeysPage() {
                   {showKey}
                   <button
                     onClick={() => copyToClipboard(showKey, 'new-key')}
-                    className="absolute top-2 right-2 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                    className="absolute top-2 right-2 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 cursor-pointer"
                   >
                     {copiedKeyId === 'new-key' ? '✓ Copied' : 'Copy'}
                   </button>
@@ -199,7 +199,7 @@ export default function APIKeysPage() {
             </div>
             <button
               onClick={() => setShowKey(null)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm cursor-pointer"
             >
               Got it
             </button>
@@ -217,7 +217,7 @@ export default function APIKeysPage() {
               <p className="text-gray-600 mb-6">Create your first API key to start using the API</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors cursor-pointer"
               >
                 Create API Key
               </button>
@@ -235,7 +235,7 @@ export default function APIKeysPage() {
                         </div>
                         <button
                           onClick={() => copyToClipboard(key.key, key.id)}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-xs font-semibold"
+                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-xs font-semibold cursor-pointer"
                           title="Copy full API key"
                         >
                           {copiedKeyId === key.id ? '✓ Copied' : 'Copy'}
@@ -244,7 +244,7 @@ export default function APIKeysPage() {
                     </div>
                     <button
                       onClick={() => handleDeleteKey(key.id)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-semibold"
+                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-semibold cursor-pointer"
                     >
                       Delete
                     </button>
@@ -305,14 +305,14 @@ export default function APIKeysPage() {
                     setShowCreateModal(false);
                     setNewKeyName('');
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateKey}
                   disabled={!newKeyName.trim()}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Create Key
                 </button>

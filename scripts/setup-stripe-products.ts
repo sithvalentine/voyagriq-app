@@ -54,7 +54,7 @@ async function setupProducts() {
       currency: 'usd',
       recurring: {
         interval: 'year',
-        trial_period_days: 14,
+        // NO trial for annual plans
       },
       metadata: {
         tier: 'starter',
@@ -100,7 +100,7 @@ async function setupProducts() {
       currency: 'usd',
       recurring: {
         interval: 'year',
-        trial_period_days: 14,
+        // NO trial for annual plans
       },
       metadata: {
         tier: 'standard',
