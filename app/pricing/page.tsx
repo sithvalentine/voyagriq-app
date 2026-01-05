@@ -103,7 +103,7 @@ export default function PricingPage() {
             </button>
           </div>
           <p className="text-sm text-gray-500 mt-3">
-            {billingInterval === 'annual' ? '🎉 Pay for 12 months, get 14 months of service!' : 'Billed monthly'}
+            {billingInterval === 'annual' ? '🎉 Get 2 months free!' : 'Billed monthly'}
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export default function PricingPage() {
                 <span className="text-purple-100">/{billingInterval === 'annual' ? 'year' : 'month'}</span>
               </div>
               {billingInterval === 'annual' && (
-                <p className="text-purple-100 text-sm mt-1">${Math.round(SUBSCRIPTION_TIERS.standard.price * 12 / 14)}/mo effective</p>
+                <p className="text-purple-100 text-sm mt-1">${Math.round(SUBSCRIPTION_TIERS.standard.price * 12 / 14)}/mo</p>
               )}
               <p className="text-purple-100 mt-2">Ideal for growing teams</p>
             </div>
@@ -222,7 +222,7 @@ export default function PricingPage() {
                 <span className="text-amber-100">/{billingInterval === 'annual' ? 'year' : 'month'}</span>
               </div>
               {billingInterval === 'annual' && (
-                <p className="text-amber-100 text-sm mt-1">${Math.round(SUBSCRIPTION_TIERS.premium.price * 12 / 14)}/mo effective</p>
+                <p className="text-amber-100 text-sm mt-1">${Math.round(SUBSCRIPTION_TIERS.premium.price * 12 / 14)}/mo</p>
               )}
               <p className="text-amber-100 mt-2">Enterprise-ready solution</p>
             </div>
