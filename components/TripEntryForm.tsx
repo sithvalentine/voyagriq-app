@@ -7,6 +7,7 @@ import { Trip } from '@/data/trips';
 import { canPerformAction, SUBSCRIPTION_TIERS } from '@/lib/subscription';
 import { useTier } from '@/contexts/TierContext';
 import { COUNTRIES } from '@/lib/countries';
+import { useInlineAutocomplete } from '@/hooks/useInlineAutocomplete';
 
 interface TripEntryFormProps {
   onSuccess: () => void;
@@ -35,6 +36,11 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
   // Load available tags for Premium users
   const [availableTags, setAvailableTags] = useState<Array<{id: string; name: string; color: string}>>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [autocompleteData, setAutocompleteData] = useState<{
+    clientNames: string[];
+    agencies: string[];
+    cities: string[];
+  }>({ clientNames: [], agencies: [], cities: [] });
 
   useEffect(() => {
     if (currentTier === 'premium') {
@@ -48,6 +54,39 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       }
     }
   }, [currentTier]);
+
+  // Load autocomplete data from Supabase
+  useEffect(() => {
+    const loadAutocompleteData = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('trips')
+          .select('client_name, travel_agency, destination_city')
+          .eq('user_id', user.id);
+
+        if (!error && data) {
+          const clientNames = Array.from(new Set(data.map((t: any) => t.client_name).filter(Boolean))) as string[];
+          const agencies = Array.from(new Set(data.map((t: any) => t.travel_agency).filter(Boolean))) as string[];
+          const cities = Array.from(new Set(data.map((t: any) => t.destination_city).filter(Boolean))) as string[];
+
+          setAutocompleteData({
+            clientNames: clientNames.sort(),
+            agencies: agencies.sort(),
+            cities: cities.sort(),
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load autocomplete data:', err);
+      }
+    };
+
+    loadAutocompleteData();
+  }, []);
 
   const [formData, setFormData] = useState({
     Trip_ID: '',
@@ -80,6 +119,25 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Setup inline autocomplete for each field
+  const clientNameAutocomplete = useInlineAutocomplete({
+    value: formData.Client_Name,
+    suggestions: autocompleteData.clientNames,
+    onChange: (value) => setFormData(prev => ({ ...prev, Client_Name: value })),
+  });
+
+  const agencyAutocomplete = useInlineAutocomplete({
+    value: formData.Travel_Agency,
+    suggestions: autocompleteData.agencies,
+    onChange: (value) => setFormData(prev => ({ ...prev, Travel_Agency: value })),
+  });
+
+  const cityAutocomplete = useInlineAutocomplete({
+    value: formData.Destination_City,
+    suggestions: autocompleteData.cities,
+    onChange: (value) => setFormData(prev => ({ ...prev, Destination_City: value })),
+  });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
@@ -94,6 +152,37 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const startDate = e.target.value;
+
+    // Update start date
+    setFormData(prev => ({ ...prev, Start_Date: startDate }));
+
+    // If end date is empty or in a different year, set it to the same year
+    if (!formData.End_Date || new Date(formData.End_Date).getFullYear() !== new Date(startDate).getFullYear()) {
+      const startYear = new Date(startDate).getFullYear();
+      const startMonth = new Date(startDate).getMonth();
+      const startDay = new Date(startDate).getDate();
+
+      // Set end date to same date as start date initially
+      const suggestedEndDate = new Date(startYear, startMonth, startDay);
+      setFormData(prev => ({
+        ...prev,
+        Start_Date: startDate,
+        End_Date: suggestedEndDate.toISOString().split('T')[0]
+      }));
+    }
+
+    // Clear error when user starts typing
+    if (errors.Start_Date) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.Start_Date;
         return newErrors;
       });
     }
@@ -345,16 +434,27 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Client Name <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="Client_Name"
-              value={formData.Client_Name}
-              onChange={handleChange}
-              placeholder="e.g., Smith Family"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                errors.Client_Name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="relative">
+              <input
+                ref={clientNameAutocomplete.inputRef}
+                type="text"
+                name="Client_Name"
+                value={formData.Client_Name}
+                onChange={handleChange}
+                onKeyDown={clientNameAutocomplete.handleKeyDown}
+                placeholder="e.g., Smith Family"
+                className={`relative w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white ${
+                  errors.Client_Name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                autoComplete="off"
+              />
+              {clientNameAutocomplete.suggestion && (
+                <div className="absolute inset-0 px-3 py-2 pointer-events-none overflow-hidden flex items-center">
+                  <span className="text-transparent">{formData.Client_Name}</span>
+                  <span className="text-gray-400">{clientNameAutocomplete.suggestion.slice(formData.Client_Name.length)}</span>
+                </div>
+              )}
+            </div>
             {errors.Client_Name && <p className="text-red-500 text-xs mt-1">{errors.Client_Name}</p>}
           </div>
 
@@ -362,16 +462,27 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Travel Agency <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="Travel_Agency"
-              value={formData.Travel_Agency}
-              onChange={handleChange}
-              placeholder="e.g., Wanderlust Travel"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                errors.Travel_Agency ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="relative">
+              <input
+                ref={agencyAutocomplete.inputRef}
+                type="text"
+                name="Travel_Agency"
+                value={formData.Travel_Agency}
+                onChange={handleChange}
+                onKeyDown={agencyAutocomplete.handleKeyDown}
+                placeholder="e.g., Wanderlust Travel"
+                className={`relative w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white ${
+                  errors.Travel_Agency ? 'border-red-500' : 'border-gray-300'
+                }`}
+                autoComplete="off"
+              />
+              {agencyAutocomplete.suggestion && (
+                <div className="absolute inset-0 px-3 py-2 pointer-events-none overflow-hidden flex items-center">
+                  <span className="text-transparent">{formData.Travel_Agency}</span>
+                  <span className="text-gray-400">{agencyAutocomplete.suggestion.slice(formData.Travel_Agency.length)}</span>
+                </div>
+              )}
+            </div>
             {errors.Travel_Agency && <p className="text-red-500 text-xs mt-1">{errors.Travel_Agency}</p>}
           </div>
 
@@ -403,7 +514,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
               type="date"
               name="Start_Date"
               value={formData.Start_Date}
-              onChange={handleChange}
+              onChange={handleStartDateChange}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base cursor-pointer ${
                 errors.Start_Date ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -453,16 +564,27 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Destination City <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="Destination_City"
-              value={formData.Destination_City}
-              onChange={handleChange}
-              placeholder="e.g., Rome"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                errors.Destination_City ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="relative">
+              <input
+                ref={cityAutocomplete.inputRef}
+                type="text"
+                name="Destination_City"
+                value={formData.Destination_City}
+                onChange={handleChange}
+                onKeyDown={cityAutocomplete.handleKeyDown}
+                placeholder="e.g., Rome"
+                className={`relative w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white ${
+                  errors.Destination_City ? 'border-red-500' : 'border-gray-300'
+                }`}
+                autoComplete="off"
+              />
+              {cityAutocomplete.suggestion && (
+                <div className="absolute inset-0 px-3 py-2 pointer-events-none overflow-hidden flex items-center">
+                  <span className="text-transparent">{formData.Destination_City}</span>
+                  <span className="text-gray-400">{cityAutocomplete.suggestion.slice(formData.Destination_City.length)}</span>
+                </div>
+              )}
+            </div>
             {errors.Destination_City && <p className="text-red-500 text-xs mt-1">{errors.Destination_City}</p>}
           </div>
         </div>

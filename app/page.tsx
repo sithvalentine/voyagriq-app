@@ -80,8 +80,11 @@ export default function LandingPage() {
           <h2 className="text-4xl font-bold text-center mb-4">
             Plans That Fit How You Sell Travel
           </h2>
-          <p className="text-xl text-center text-purple-100 mb-12">
+          <p className="text-xl text-center text-purple-100 mb-3">
             Start simple and upgrade as your trips and team grow. No setup fees, no long-term contracts.
+          </p>
+          <p className="text-lg text-center text-yellow-300 font-semibold mb-12">
+            💰 Save big with annual billing: Pay for 12 months, get 14 months!
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -95,7 +98,7 @@ export default function LandingPage() {
               <ul className="text-left text-sm space-y-2 mb-6">
                 <li className="flex items-start">
                   <span className="text-green-500 mr-2">✓</span>
-                  <span>14-day free trial</span>
+                  <span>14-day trial on monthly plans</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-2">✓</span>
@@ -146,7 +149,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-2">✓</span>
-                  <span>14-day free trial</span>
+                  <span>14-day trial on monthly plans</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-2">✓</span>
@@ -447,15 +450,15 @@ export default function LandingPage() {
           </h2>
           <p className="text-xl text-gray-300 mb-8">
             Join travel advisors who are using data to price better, negotiate smarter, and grow with confidence.
-            Start your 14-day free trial today.
+            Choose the plan that fits your agency.
           </p>
           <Link href="/pricing">
             <button className="px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg cursor-pointer">
-              Start Your 14-Day Free Trial
+              View Pricing & Get Started
             </button>
           </Link>
           <p className="text-sm text-gray-400 mt-4">
-            14-day free trial • No setup fees • Cancel anytime
+            14-day trial on monthly plans • No setup fees • Cancel anytime
           </p>
         </div>
       </div>

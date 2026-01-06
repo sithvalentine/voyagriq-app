@@ -153,7 +153,7 @@ export default function TagsManagement() {
           {!isAddingTag && (
             <button
               onClick={() => setIsAddingTag(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg cursor-pointer"
             >
               + Create Tag
             </button>
@@ -197,7 +197,7 @@ export default function TagsManagement() {
                     key={preset.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, color: preset.value })}
-                    className={`h-12 rounded-lg border-4 transition-all ${
+                    className={`h-12 rounded-lg border-4 transition-all cursor-pointer ${
                       formData.color === preset.value
                         ? 'border-gray-900 scale-110'
                         : 'border-gray-200 hover:border-gray-400'
@@ -227,14 +227,14 @@ export default function TagsManagement() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 {editingTag ? 'Update Tag' : 'Create Tag'}
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -256,7 +256,7 @@ export default function TagsManagement() {
             </p>
             <button
               onClick={() => setIsAddingTag(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
             >
               Create Your First Tag
             </button>
@@ -287,13 +287,13 @@ export default function TagsManagement() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(tag)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(tag.id)}
-                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors"
+                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors cursor-pointer"
                   >
                     Delete
                   </button>

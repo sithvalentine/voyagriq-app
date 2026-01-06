@@ -1,0 +1,6 @@
+Trip_ID,Client_Name,Travel_Agency,Start_Date,End_Date,Destination_Country,Destination_City,Adults,Children,Total_Travelers,Flight_Cost,Hotel_Cost,Ground_Transport,Activities_Tours,Meals_Cost,Insurance_Cost,Other_Costs,Currency,Commission_Rate,Commission_Amount,Client_ID,Client_Type
+T001,John Smith Travel Inc,,2024-03-15,2024-03-22,France,Paris,2,0,2,1250.00,1800.00,350.00,450.00,600.00,150.00,100.00,USD,10.50,469.50,C001,individual
+T002,Sarah Johnson Group,Elite Travel,2024-04-10,2024-04-17,Italy,Rome,4,2,6,3200.00,2400.00,500.00,800.00,1200.00,300.00,150.00,USD,12.00,1026.00,C002,group
+T003,Corporate Retreat 2024,Business Travel Co,2024-05-05,2024-05-12,Spain,Barcelona,8,0,8,5600.00,4200.00,900.00,1500.00,2000.00,500.00,300.00,USD,8.50,1275.00,C003,corporate
+T004,Anderson Family Vacation,,2024-06-20,2024-06-30,Greece,Athens,2,3,5,2800.00,3000.00,600.00,1000.00,1500.00,250.00,200.00,USD,10.00,935.00,C004,individual
+T005,Martinez Honeymoon,Romantic Getaways,2024-07-15,2024-07-25,Maldives,Male,2,0,2,4500.00,5000.00,400.00,800.00,1000.00,350.00,150.00,USD,15.00,1830.00,C005,individual

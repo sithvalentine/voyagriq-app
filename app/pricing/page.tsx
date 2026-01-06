@@ -11,11 +11,12 @@ export default function PricingPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
 
   const handleSubscribe = async (tier: 'starter' | 'standard' | 'premium') => {
     // If not logged in, redirect to register with tier parameter
     if (!user) {
-      router.push(`/register?tier=${tier}`);
+      router.push(`/register?tier=${tier}&interval=${billingInterval}`);
       return;
     }
 
@@ -26,7 +27,7 @@ export default function PricingPage() {
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, userId: user.id }),
+        body: JSON.stringify({ tier, userId: user.id, interval: billingInterval }),
       });
 
       if (!response.ok) {
@@ -46,6 +47,23 @@ export default function PricingPage() {
     }
   };
 
+  // Calculate annual price (12 months, get 14 months = 2 months free)
+  const getDisplayPrice = (monthlyPrice: number) => {
+    if (billingInterval === 'annual') {
+      return monthlyPrice * 12; // Pay for 12 months
+    }
+    return monthlyPrice;
+  };
+
+  const getPriceLabel = (monthlyPrice: number) => {
+    if (billingInterval === 'annual') {
+      const annualPrice = monthlyPrice * 12;
+      const monthlyEquivalent = annualPrice / 14; // Spread over 14 months
+      return `$${annualPrice}/year (${monthlyEquivalent.toFixed(0)}/mo effective)`;
+    }
+    return `$${monthlyPrice}/month`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -54,22 +72,57 @@ export default function PricingPage() {
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
             Professional travel analytics for agencies of all sizes. Start with what you need, upgrade as you grow.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4 bg-white rounded-full p-2 shadow-md max-w-md mx-auto">
+            <button
+              onClick={() => setBillingInterval('monthly')}
+              className={`px-6 py-2 rounded-full font-semibold transition-all cursor-pointer ${
+                billingInterval === 'monthly'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingInterval('annual')}
+              className={`px-6 py-2 rounded-full font-semibold transition-all cursor-pointer ${
+                billingInterval === 'annual'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Annual
+            </button>
+          </div>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto">
           {/* Starter Tier */}
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow relative">
-            <div className="absolute top-0 right-0 bg-blue-400 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
-              14-DAY FREE TRIAL
-            </div>
+            {billingInterval === 'monthly' && (
+              <div className="absolute top-0 right-0 bg-blue-400 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+                14-DAY FREE TRIAL
+              </div>
+            )}
+            {billingInterval === 'annual' && (
+              <div className="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+                2 FREE MONTHS
+              </div>
+            )}
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.starter.name}</h2>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold">${SUBSCRIPTION_TIERS.starter.price}</span>
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">
+                  ${billingInterval === 'annual'
+                    ? Math.round(SUBSCRIPTION_TIERS.starter.price * 12 / 14)
+                    : SUBSCRIPTION_TIERS.starter.price}
+                </span>
                 <span className="text-blue-100">/month</span>
               </div>
               <p className="text-blue-100 mt-2">Perfect for solo advisors</p>
@@ -84,12 +137,20 @@ export default function PricingPage() {
               </div>
 
               <ul className="space-y-3 mb-8">
-                {SUBSCRIPTION_TIERS.starter.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-green-500 font-bold text-lg">✓</span>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
+                {SUBSCRIPTION_TIERS.starter.features
+                  .filter(feature => {
+                    // Filter out trial messaging on annual plans
+                    if (billingInterval === 'annual' && feature.toLowerCase().includes('free trial')) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-green-500 font-bold text-lg">✓</span>
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
               </ul>
 
               {user && currentTier === 'starter' ? (
@@ -110,17 +171,28 @@ export default function PricingPage() {
 
           {/* Standard Tier - POPULAR */}
           <div className="bg-white rounded-2xl shadow-2xl border-4 border-purple-500 overflow-hidden transform scale-105 relative">
-            <div className="absolute top-0 left-0 bg-blue-400 text-white px-3 py-1 text-xs font-bold rounded-br-lg">
-              14-DAY FREE TRIAL
-            </div>
+            {billingInterval === 'monthly' && (
+              <div className="absolute top-0 left-0 bg-blue-400 text-white px-3 py-1 text-xs font-bold rounded-br-lg">
+                14-DAY FREE TRIAL
+              </div>
+            )}
+            {billingInterval === 'annual' && (
+              <div className="absolute top-0 left-0 bg-green-500 text-white px-3 py-1 text-xs font-bold rounded-br-lg">
+                2 FREE MONTHS
+              </div>
+            )}
             <div className="absolute top-0 right-0 bg-purple-500 text-white px-4 py-1 text-sm font-bold rounded-bl-lg">
               MOST POPULAR
             </div>
 
             <div className="bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.standard.name}</h2>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold">${SUBSCRIPTION_TIERS.standard.price}</span>
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">
+                  ${billingInterval === 'annual'
+                    ? Math.round(SUBSCRIPTION_TIERS.standard.price * 12 / 14)
+                    : SUBSCRIPTION_TIERS.standard.price}
+                </span>
                 <span className="text-purple-100">/month</span>
               </div>
               <p className="text-purple-100 mt-2">Ideal for growing teams</p>
@@ -135,12 +207,20 @@ export default function PricingPage() {
               </div>
 
               <ul className="space-y-3 mb-8">
-                {SUBSCRIPTION_TIERS.standard.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-green-500 font-bold text-lg">✓</span>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
+                {SUBSCRIPTION_TIERS.standard.features
+                  .filter(feature => {
+                    // Filter out trial messaging on annual plans
+                    if (billingInterval === 'annual' && feature.toLowerCase().includes('free trial')) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-green-500 font-bold text-lg">✓</span>
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
               </ul>
 
               {user && currentTier === 'standard' ? (
@@ -160,11 +240,20 @@ export default function PricingPage() {
           </div>
 
           {/* Premium Tier */}
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow">
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow relative">
+            {billingInterval === 'annual' && (
+              <div className="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+                2 FREE MONTHS
+              </div>
+            )}
             <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6">
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.premium.name}</h2>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold">${SUBSCRIPTION_TIERS.premium.price}</span>
+              <div className="flex items-baseline">
+                <span className="text-4xl font-bold">
+                  ${billingInterval === 'annual'
+                    ? Math.round(SUBSCRIPTION_TIERS.premium.price * 12 / 14)
+                    : SUBSCRIPTION_TIERS.premium.price}
+                </span>
                 <span className="text-amber-100">/month</span>
               </div>
               <p className="text-amber-100 mt-2">Enterprise-ready solution</p>
@@ -215,8 +304,18 @@ export default function PricingPage() {
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-4 px-4 text-gray-700 font-semibold">Feature</th>
-                  <th className="text-center py-4 px-4 text-blue-600 font-semibold">Starter<br/><span className="text-xs text-gray-500 font-normal">(14-day trial)</span></th>
-                  <th className="text-center py-4 px-4 text-purple-600 font-semibold">Standard<br/><span className="text-xs text-gray-500 font-normal">(14-day trial)</span></th>
+                  <th className="text-center py-4 px-4 text-blue-600 font-semibold">
+                    Starter<br/>
+                    {billingInterval === 'monthly' && (
+                      <span className="text-xs text-gray-500 font-normal">(14-day trial)</span>
+                    )}
+                  </th>
+                  <th className="text-center py-4 px-4 text-purple-600 font-semibold">
+                    Standard<br/>
+                    {billingInterval === 'monthly' && (
+                      <span className="text-xs text-gray-500 font-normal">(14-day trial)</span>
+                    )}
+                  </th>
                   <th className="text-center py-4 px-4 text-amber-600 font-semibold">Premium</th>
                 </tr>
               </thead>
@@ -313,10 +412,19 @@ export default function PricingPage() {
           <div className="space-y-6 max-w-3xl mx-auto">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                What's the annual billing discount?
+              </h3>
+              <p className="text-gray-600">
+                Pay for 12 months upfront and get 14 months of service—that's 2 months completely free! This applies to all tiers and saves you approximately 14% compared to paying monthly.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Can I upgrade or downgrade my plan?
               </h3>
               <p className="text-gray-600">
-                Yes! You can upgrade or downgrade at any time. When upgrading, you'll be charged a prorated amount for the remainder of your billing cycle. Downgrades take effect at the start of your next billing cycle.
+                Yes! You can upgrade or downgrade at any time. When upgrading, you'll be charged a prorated amount for the remainder of your billing cycle. Downgrades take effect at the start of your next billing cycle. You can also switch between monthly and annual billing.
               </p>
             </div>
 
@@ -334,7 +442,15 @@ export default function PricingPage() {
                 Is there a free trial?
               </h3>
               <p className="text-gray-600">
-                Yes! All plans include a 14-day free trial. Payment details are required to start your trial, but you won't be charged until the trial ends. Cancel anytime during the trial at no cost.
+                {billingInterval === 'monthly' ? (
+                  <>
+                    Yes! Starter and Standard monthly plans include a 14-day free trial. Payment details are required to start your trial, but you won't be charged until the trial ends. Cancel anytime during the trial at no cost. Premium plans do not include a free trial.
+                  </>
+                ) : (
+                  <>
+                    Annual plans do not include a free trial, but you get 2 months free when you pay for 12 months upfront. Payment is processed immediately when you subscribe.
+                  </>
+                )}
               </p>
             </div>
 

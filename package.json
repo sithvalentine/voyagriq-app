@@ -19,12 +19,14 @@
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.0.3",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.23",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "next": "^16.1.1",
+    "papaparse": "^5.5.3",
     "postcss": "^8.5.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -35,6 +37,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0"
   }
 }

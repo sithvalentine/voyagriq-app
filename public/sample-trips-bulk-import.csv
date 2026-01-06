@@ -1,0 +1,21 @@
+Trip_ID,Client_Name,Travel_Agency,Start_Date,End_Date,Destination_Country,Destination_City,Adults,Children,Total_Travelers,Flight_Cost,Hotel_Cost,Ground_Transport,Activities_Tours,Meals_Cost,Insurance_Cost,Other_Costs,Currency,Commission_Rate,Commission_Amount,Client_ID,Client_Type
+T2024-001,Sarah Johnson,Elite Travel Partners,2024-03-15,2024-03-22,France,Paris,2,0,2,1250.00,1800.00,350.00,450.00,600.00,150.00,100.00,USD,10.50,469.50,C001,individual
+T2024-002,Michael Chen,Wanderlust Adventures,2024-04-10,2024-04-17,Italy,Rome,4,2,6,3200.00,2400.00,500.00,800.00,1200.00,300.00,150.00,USD,12.00,1026.00,C002,group
+T2024-003,Anderson Family,Global Voyages Inc,2024-05-05,2024-05-12,Spain,Barcelona,2,3,5,2800.00,3000.00,600.00,1000.00,1500.00,250.00,200.00,USD,8.50,935.00,C003,individual
+T2024-004,TechCorp Executive Retreat,Business Travel Co,2024-06-20,2024-06-30,Greece,Athens,8,0,8,5600.00,4200.00,900.00,1500.00,2000.00,500.00,300.00,USD,10.00,1500.00,C004,corporate
+T2024-005,Robert & Linda Martinez,Romantic Getaways,2024-07-15,2024-07-25,Maldives,Male,2,0,2,4500.00,5000.00,400.00,800.00,1000.00,350.00,150.00,USD,15.00,1830.00,C005,individual
+T2024-006,Thompson Group,Adventure Seekers,2024-08-01,2024-08-10,Japan,Tokyo,6,0,6,4800.00,3600.00,700.00,1200.00,1800.00,400.00,200.00,USD,11.00,1430.00,C006,group
+T2024-007,Emily Rodriguez,Sunset Travel Agency,2024-08-20,2024-08-27,Thailand,Bangkok,1,0,1,950.00,800.00,200.00,400.00,500.00,100.00,50.00,USD,9.00,270.00,C007,individual
+T2024-008,Williams Wedding Party,Celebration Journeys,2024-09-15,2024-09-22,Mexico,Cancun,12,0,12,7200.00,6000.00,1200.00,2000.00,3000.00,600.00,400.00,USD,13.50,2754.00,C008,group
+T2024-009,Peterson Family Reunion,Heritage Tours,2024-10-05,2024-10-14,Ireland,Dublin,10,4,14,8400.00,7000.00,1400.00,1800.00,3500.00,700.00,500.00,USD,10.00,2330.00,C009,group
+T2024-010,Dr. James Foster,Medical Conference Travel,2024-11-10,2024-11-15,Switzerland,Geneva,1,0,1,1800.00,1200.00,300.00,200.00,400.00,150.00,100.00,USD,8.00,323.60,C010,corporate
+T2024-011,Garcia Honeymoon,Romance & Beyond,2024-12-01,2024-12-10,Bora Bora,Vaitape,2,0,2,5200.00,6000.00,500.00,900.00,1200.00,400.00,200.00,USD,14.00,2002.00,C011,individual
+T2024-012,Summit Tech Sales Team,Corporate Incentives Plus,2025-01-20,2025-01-27,Dubai,Dubai,15,0,15,12000.00,9000.00,1800.00,3000.00,4500.00,900.00,600.00,USD,9.50,2979.50,C012,corporate
+T2024-013,Brown Family,Coast to Coast Travel,2025-02-10,2025-02-17,Australia,Sydney,4,2,6,6500.00,4200.00,800.00,1200.00,1800.00,450.00,300.00,USD,11.50,1778.75,C013,individual
+T2024-014,Rivera Retirement Trip,Senior Adventures,2025-03-05,2025-03-15,Portugal,Lisbon,2,0,2,1600.00,2000.00,400.00,600.00,800.00,200.00,150.00,USD,10.00,575.00,C014,individual
+T2024-015,NextGen Startup Offsite,Innovation Travel,2025-04-12,2025-04-19,Iceland,Reykjavik,20,0,20,16000.00,10000.00,2000.00,3500.00,5000.00,1000.00,800.00,USD,8.50,3255.50,C015,corporate
+T2024-016,Kumar Wedding Guests,Destination Weddings Co,2025-05-20,2025-05-28,India,Jaipur,18,6,24,15600.00,12000.00,2400.00,3000.00,6000.00,1200.00,900.00,USD,12.00,4920.00,C016,group
+T2024-017,Davis Anniversary,Milestone Travel,2025-06-15,2025-06-25,New Zealand,Queenstown,2,0,2,4200.00,3500.00,600.00,1100.00,1000.00,300.00,200.00,USD,13.00,1430.00,C017,individual
+T2024-018,University Alumni Group,Educational Journeys,2025-07-08,2025-07-18,Peru,Cusco,25,0,25,18000.00,12500.00,2500.00,4000.00,6250.00,1250.00,1000.00,USD,9.00,4095.00,C018,group
+T2024-019,Lee Business Conference,Executive Suites Travel,2025-08-01,2025-08-05,Singapore,Singapore,1,0,1,2200.00,1500.00,250.00,300.00,500.00,150.00,100.00,USD,7.50,375.00,C019,corporate
+T2024-020,Morgan Safari Adventure,Wild Expeditions,2025-09-10,2025-09-20,Kenya,Nairobi,4,0,4,5800.00,4500.00,1000.00,2500.00,1200.00,500.00,400.00,USD,14.50,2319.50,C020,group

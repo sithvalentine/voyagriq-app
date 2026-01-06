@@ -133,7 +133,7 @@ export default function SettingsPage() {
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{setting.description}</p>
                     <Link href="/pricing">
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer">
                         Upgrade to unlock →
                       </button>
                     </Link>

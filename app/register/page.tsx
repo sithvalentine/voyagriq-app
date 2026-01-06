@@ -1,19 +1,20 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
-import { useAuth } from '@/contexts/AuthContext';
 
 function RegisterContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { signUp } = useAuth();
   const tierParam = searchParams.get('tier') as SubscriptionTier | null;
+  const intervalParam = searchParams.get('interval') as 'monthly' | 'annual' | null;
   const selectedTier = tierParam || 'starter';
+  const billingInterval = intervalParam || 'monthly';
   const tierInfo = SUBSCRIPTION_TIERS[selectedTier];
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -98,58 +99,67 @@ function RegisterContent() {
 
     setLoading(true);
 
-    // Sign up the user with Supabase
+    // NEW APPROACH: Don't create Supabase account yet!
+    // Instead, redirect to Stripe with registration data in metadata
+    // The account will be created AFTER successful payment via webhook
+
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-    const { error, data } = await signUp(formData.email, formData.password, fullName);
 
-    if (error) {
-      console.error('Signup error:', error);
-      setErrors({ general: error.message });
-      setLoading(false);
-      return;
-    }
+    try {
+      console.log('[register] Selected tier:', selectedTier);
+      console.log('[register] Tier from URL param:', tierParam);
+      console.log('[register] Creating checkout session for tier:', selectedTier);
 
-    // Redirect to Stripe Checkout immediately after registration
-    // Email verification will happen in the background
-    if (data?.user) {
-      console.log('User created, redirecting to Stripe...', data.user.id);
-      console.log('Selected tier:', selectedTier);
-      try {
-        const response = await fetch('/api/stripe/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tier: selectedTier, userId: data.user.id }),
-        });
-
-        console.log('Stripe checkout response:', response.status);
-
-        if (response.ok) {
-          const { url } = await response.json();
-          console.log('Stripe checkout URL:', url);
-          if (url) {
-            // Redirect to Stripe Checkout
-            window.location.href = url;
-            return;
+      // Create Stripe checkout session with registration data
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: selectedTier,
+          interval: billingInterval,
+          // Pass registration data - account will be created after payment
+          registrationData: {
+            email: formData.email,
+            password: formData.password,
+            fullName: fullName,
+            agencyName: formData.agencyName || null
           }
-        } else {
-          const errorData = await response.json();
-          console.error('Stripe checkout error:', errorData);
-          setErrors({ general: 'Failed to create checkout session. Please try again.' });
-          setLoading(false);
+        }),
+      });
+
+      console.log('[register] Stripe checkout response:', response.status);
+
+      if (response.ok) {
+        const { url } = await response.json();
+        console.log('Stripe checkout URL:', url);
+        if (url) {
+          // Store registration details for post-payment messaging
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('voyagriq-pending-registration', JSON.stringify({
+              email: formData.email,
+              tier: selectedTier,
+              timestamp: Date.now()
+            }));
+          }
+
+          // Redirect to Stripe Checkout
+          // No account exists yet - it will be created after payment
+          window.location.href = url;
           return;
         }
-      } catch (checkoutError) {
-        console.error('Error creating checkout session:', checkoutError);
-        setErrors({ general: 'Failed to redirect to payment. Please try again.' });
+      } else {
+        const errorData = await response.json();
+        console.error('Stripe checkout error:', errorData);
+        setErrors({ general: errorData.error || 'Failed to create checkout session. Please try again.' });
         setLoading(false);
         return;
       }
+    } catch (checkoutError) {
+      console.error('Error creating checkout session:', checkoutError);
+      setErrors({ general: 'Failed to redirect to payment. Please try again.' });
+      setLoading(false);
+      return;
     }
-
-    // Fallback: if no user data returned (shouldn't happen)
-    console.error('No user data returned from signup');
-    alert(`Welcome! Your ${tierInfo.name} account has been created. Please check your email to verify your account.`);
-    router.push('/login?message=Please check your email to verify your account');
   };
 
   return (
@@ -183,13 +193,32 @@ function RegisterContent() {
                     ? 'Unlimited trips per month'
                     : `${tierInfo.tripLimit} trips per month`}
                 </p>
+                {selectedTier !== 'premium' && billingInterval === 'monthly' && (
+                  <p className="text-white/90 text-sm mt-1 font-semibold">
+                    ✨ Includes 14-day free trial
+                  </p>
+                )}
+                {billingInterval === 'annual' && (
+                  <p className="text-white/90 text-sm mt-1 font-semibold">
+                    🎉 Get 2 months free with annual billing!
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <div className="text-4xl font-bold">
-                  {tierInfo.price === 0 ? 'Free' : `$${tierInfo.price}`}
+                  {tierInfo.price === 0
+                    ? 'Free'
+                    : `$${billingInterval === 'annual'
+                        ? Math.round(tierInfo.price * 12 / 14)
+                        : tierInfo.price}`}
                 </div>
                 {tierInfo.price > 0 && (
                   <div className="text-white/90 text-sm">per month</div>
+                )}
+                {billingInterval === 'annual' && tierInfo.price > 0 && (
+                  <div className="text-white/70 text-xs mt-1">
+                    Billed ${tierInfo.price * 12} annually
+                  </div>
                 )}
               </div>
             </div>
@@ -289,18 +318,37 @@ function RegisterContent() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="8+ chars, 1 uppercase, 1 number, 1 special char"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.password ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="8+ chars, 1 uppercase, 1 number, 1 special char"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
@@ -311,18 +359,37 @@ function RegisterContent() {
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password *
                 </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Re-enter your password"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Re-enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
                 )}
@@ -406,12 +473,21 @@ function RegisterContent() {
               disabled={loading}
               className="w-full mt-8 px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating Account...' : (selectedTier === 'premium' ? 'Get Started' : 'Start 14-Day Free Trial')}
+              {loading
+                ? 'Creating Account...'
+                : (selectedTier === 'premium' || billingInterval === 'annual')
+                  ? 'Get Started'
+                  : 'Start 14-Day Free Trial'}
             </button>
 
-            {selectedTier !== 'premium' && (
+            {selectedTier !== 'premium' && billingInterval === 'monthly' && (
               <p className="mt-4 text-center text-sm text-gray-600">
                 Start your 14-day free trial • No credit card required • Cancel anytime
+              </p>
+            )}
+            {billingInterval === 'annual' && (
+              <p className="mt-4 text-center text-sm text-gray-600">
+                Pay for 12 months, get 14 months • Cancel anytime
               </p>
             )}
 

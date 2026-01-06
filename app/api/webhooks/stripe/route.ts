@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -11,43 +12,102 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: Prevent webhook flooding attacks
+  const clientIP = getClientIP(request);
+  const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.PUBLIC_PER_IP.limit, RATE_LIMITS.PUBLIC_PER_IP.windowMs);
+
+  if (!rateLimit.allowed) {
+    console.warn(`[stripe-webhook] Rate limit exceeded for IP: ${clientIP}`);
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: rateLimit.headers
+      }
+    );
+  }
+
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
 
-  if (!signature) {
-    console.error('[stripe-webhook] No signature found');
-    return NextResponse.json({ error: 'No signature' }, { status: 400 });
-  }
-
   let event: Stripe.Event;
 
+  // SECURITY: ALWAYS verify webhook signature in production
+  // Missing signature or invalid signature = reject the webhook
+  if (!signature) {
+    console.error('[stripe-webhook] Missing stripe-signature header');
+    return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+  }
+
+  if (!webhookSecret) {
+    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured');
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+  }
+
   try {
-    // Verify webhook signature
+    // Verify webhook signature - this prevents spoofed webhooks
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    console.log('[stripe-webhook] Event received:', event.type);
+    console.log('[stripe-webhook] Event received (verified):', event.type);
   } catch (err: any) {
-    console.error('[stripe-webhook] Signature verification failed:', err.message);
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    console.error('[stripe-webhook] ⚠️ Signature verification FAILED:', err.message);
+    console.error('[stripe-webhook] This could be a spoofed webhook attempt!');
+    return NextResponse.json({ error: `Webhook signature verification failed: ${err.message}` }, { status: 401 });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    // IDEMPOTENCY: Check if we've already processed this webhook event
+    // Stripe can send the same event multiple times, so we need to deduplicate
+    const { data: existingEvent } = await supabase
+      .from('webhook_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .single();
+
+    if (existingEvent) {
+      console.log('[stripe-webhook] Event already processed:', event.id);
+      return NextResponse.json({ received: true, status: 'already_processed' });
+    }
+
+    // Record this event to prevent duplicate processing
+    const { error: insertError } = await supabase
+      .from('webhook_events')
+      .insert({
+        event_id: event.id,
+        event_type: event.type,
+        processed_at: new Date().toISOString(),
+        event_data: event.data.object,
+      });
+
+    if (insertError) {
+      console.error('[stripe-webhook] Error recording event:', insertError);
+      // Continue processing even if we can't record (avoid blocking legitimate events)
+    }
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('[stripe-webhook] Checkout session completed:', session.id);
+        console.log('[stripe-webhook] Session metadata:', JSON.stringify(session.metadata));
 
-        const userId = session.metadata?.userId;
         const tier = session.metadata?.tier;
         const customerId = session.customer as string;
+        const userId = session.metadata?.userId;
 
+        console.log('[stripe-webhook] Extracted tier:', tier);
+        console.log('[stripe-webhook] User ID:', userId);
+
+        // SECURITY FIX: User account is now created BEFORE payment (not after)
+        // Webhook just updates the profile with Stripe customer ID
         if (!userId) {
           console.error('[stripe-webhook] No userId in session metadata');
           return NextResponse.json({ error: 'No userId in metadata' }, { status: 400 });
         }
 
-        // Update user profile with Stripe customer ID and tier
+        console.log('[stripe-webhook] Payment successful - Updating profile for user:', userId);
+
+        // Update user profile with Stripe customer ID and activate subscription
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
@@ -63,7 +123,8 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
 
-        console.log('[stripe-webhook] Successfully updated profile for user:', userId);
+        console.log('[stripe-webhook] Successfully activated subscription for user:', userId);
+
         break;
       }
 
@@ -71,10 +132,14 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         console.log('[stripe-webhook] Subscription event:', event.type, subscription.id);
+        console.log('[stripe-webhook] Subscription metadata:', JSON.stringify(subscription.metadata));
 
         const customerId = subscription.customer as string;
         const status = subscription.status;
         const tier = subscription.metadata?.tier;
+
+        console.log('[stripe-webhook] Subscription tier from metadata:', tier);
+        console.log('[stripe-webhook] Subscription status:', status);
 
         // Find user by Stripe customer ID
         const { data: profile, error: findError } = await supabase
