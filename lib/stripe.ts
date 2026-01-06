@@ -1,15 +1,31 @@
 import Stripe from 'stripe';
 
-// Use a placeholder during build if not set, will fail at runtime if actually missing
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_placeholder_for_build';
+// Lazy-load Stripe client to avoid build-time initialization
+let _stripe: Stripe | null = null;
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('⚠️  STRIPE_SECRET_KEY is not set - Stripe functionality will not work!');
-}
+export const getStripeClient = (): Stripe => {
+  if (!_stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
 
-export const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-12-15.clover',
-  typescript: true,
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+    }
+
+    _stripe = new Stripe(secretKey, {
+      apiVersion: '2025-12-15.clover',
+      typescript: true,
+    });
+  }
+
+  return _stripe;
+};
+
+// For backwards compatibility, export stripe but initialize lazily
+export const stripe = new Proxy({} as Stripe, {
+  get: (_target, prop) => {
+    const client = getStripeClient();
+    return (client as any)[prop];
+  }
 });
 
 // Stripe Price IDs - You'll need to create these in your Stripe Dashboard
