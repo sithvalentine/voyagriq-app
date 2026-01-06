@@ -16,36 +16,17 @@ function ResetPasswordContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenChecked, setTokenChecked] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
 
   useEffect(() => {
-    // Validate the reset token
-    if (!token) {
+    // Supabase Auth handles token validation automatically
+    // The token is in the URL fragment after email redirect
+    if (token) {
+      setTokenValid(true);
       setTokenChecked(true);
-      return;
-    }
-
-    // Check token in localStorage (demo mode)
-    const storedData = localStorage.getItem('password-reset-token');
-    if (!storedData) {
+    } else {
       setTokenChecked(true);
-      return;
     }
-
-    try {
-      const resetData = JSON.parse(storedData);
-
-      // Check if token matches and hasn't expired
-      if (resetData.token === token && resetData.expires > Date.now()) {
-        setTokenValid(true);
-        setUserEmail(resetData.email);
-      }
-    } catch (e) {
-      console.error('Error parsing reset token:', e);
-    }
-
-    setTokenChecked(true);
   }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,27 +68,37 @@ function ResetPasswordContent() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    // TODO: In production, this would call your authentication API
-    console.log('Password reset for:', userEmail);
-    console.log('New password:', formData.password);
+    try {
+      // Use Supabase Auth to update password
+      const { supabase } = await import('@/lib/supabase');
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.password
+      });
 
-    // Clear the reset token from localStorage
-    localStorage.removeItem('password-reset-token');
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        setErrors({ password: 'Failed to reset password. Please try again or request a new reset link.' });
+        return;
+      }
 
-    // Show success message
-    setResetSuccess(true);
+      // Show success message
+      setResetSuccess(true);
 
-    // Redirect to login after 3 seconds
-    setTimeout(() => {
-      router.push('/login');
-    }, 3000);
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setErrors({ password: 'An unexpected error occurred. Please try again.' });
+    }
   };
 
   // Loading state
@@ -209,10 +200,9 @@ function ResetPasswordContent() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Reset Your Password
             </h1>
-            <p className="text-gray-600 mb-1">
+            <p className="text-gray-600">
               Enter a new password for your account
             </p>
-            <p className="text-sm text-blue-600 font-medium">{userEmail}</p>
           </div>
 
           {/* Form */}

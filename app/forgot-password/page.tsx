@@ -6,10 +6,9 @@ import Link from 'next/link';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [resetLink, setResetLink] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -24,31 +23,24 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    // Generate a reset token (for demo purposes)
-    const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const expirationTime = Date.now() + (60 * 60 * 1000); // 1 hour from now
+    try {
+      // Use Supabase Auth password reset functionality
+      const { supabase } = await import('@/lib/supabase');
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-    // Store reset token in localStorage (demo mode)
-    const resetData = {
-      email,
-      token: resetToken,
-      expires: expirationTime,
-    };
-    localStorage.setItem('password-reset-token', JSON.stringify(resetData));
+      if (resetError) {
+        console.error('Password reset error:', resetError);
+        // Don't reveal if email exists for security
+      }
 
-    // Generate the reset link
-    const link = `${window.location.origin}/reset-password?token=${resetToken}`;
-    setResetLink(link);
-    setIsSubmitted(true);
-
-    // TODO: In production, this would call your backend API to send an email
-    console.log('Password reset requested for:', email);
-    console.log('Reset token:', resetToken);
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(resetLink);
-    alert('Reset link copied to clipboard!');
+      // Always show success message (security best practice)
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   if (isSubmitted) {
@@ -70,34 +62,16 @@ export default function ForgotPasswordPage() {
               <p className="text-blue-600 font-semibold mt-1">{email}</p>
             </div>
 
-            {/* Demo Mode - Show Reset Link */}
-            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-2 mb-3">
-                <span className="text-xl">🔧</span>
+            {/* Email Sent Confirmation */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-xl">📧</span>
                 <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 mb-1">Demo Mode</h3>
-                  <p className="text-sm text-gray-700 mb-3">
-                    Since this is a demo app without email functionality, here's your password reset link:
+                  <h3 className="font-bold text-gray-900 mb-1">Email Sent</h3>
+                  <p className="text-sm text-gray-700">
+                    We've sent a password reset link to your email address. Click the link in the email to reset your password.
                   </p>
                 </div>
-              </div>
-
-              <div className="bg-white rounded border border-yellow-400 p-3 mb-3 break-all text-sm font-mono text-gray-800">
-                {resetLink}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCopyLink}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
-                >
-                  Copy Link
-                </button>
-                <Link href={`/reset-password?token=${resetLink.split('token=')[1]}`} className="flex-1">
-                  <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm">
-                    Reset Password →
-                  </button>
-                </Link>
               </div>
             </div>
 
@@ -143,7 +117,6 @@ export default function ForgotPasswordPage() {
               <button
                 onClick={() => {
                   setIsSubmitted(false);
-                  setResetLink('');
                 }}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
