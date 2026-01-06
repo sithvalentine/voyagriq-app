@@ -215,11 +215,13 @@ export function generateTripReportPDF(
 
     // Define colors for each category - vibrant, contrasting colors
     const pieColors: [number, number, number][] = [
-      [59, 130, 246],   // blue - Flight
-      [34, 197, 94],    // green - Hotel
-      [249, 115, 22],   // orange - Activities
-      [168, 85, 247],   // purple - Ground Transport
-      [236, 72, 153]    // pink - Meals
+      [59, 130, 246],   // blue - Hotel
+      [34, 197, 94],    // green - Flight
+      [249, 115, 22],   // orange - Meals
+      [168, 85, 247],   // purple - Activities
+      [236, 72, 153],   // pink - Ground Transport
+      [234, 179, 8],    // yellow - Insurance
+      [107, 114, 128]   // gray - Other
     ];
 
     // Draw pie chart
