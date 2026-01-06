@@ -112,13 +112,18 @@ export default function TripDetail() {
   }, [tripId]);
 
   const handleExportPDF = () => {
-    if (trip) {
+    if (!trip) return;
+
+    try {
       const includeBI = currentTier === 'standard' || currentTier === 'premium';
       generateTripReportPDF(trip, allTrips, currentTier, {
         includeBusinessIntelligence: includeBI,
         agencyName: trip.Travel_Agency,
         currency: currency
       });
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      alert(`Failed to generate PDF: ${error.message || 'Unknown error'}`);
     }
   };
 
