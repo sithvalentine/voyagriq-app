@@ -2,10 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { parseImportFile, ParsedTrip } from '@/lib/importParser';
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_ROWS_PER_IMPORT = 200; // Maximum rows allowed per import (prevents abuse)
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +39,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized. Please log in.' },
         { status: 401 }
+      );
+    }
+
+    // Rate limiting: Limit bulk imports per user to prevent abuse
+    const rateLimit = checkRateLimit(user.id, RATE_LIMITS.BULK_PER_USER.limit, RATE_LIMITS.BULK_PER_USER.windowMs);
+
+    if (!rateLimit.allowed) {
+      console.warn(`[Bulk Import] Rate limit exceeded for user: ${user.id}`);
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: rateLimit.headers
+        }
       );
     }
 
@@ -112,6 +128,18 @@ export async function POST(request: NextRequest) {
         {
           error: 'Failed to parse file',
           details: parseResult.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check maximum row limit to prevent abuse
+    if (parseResult.totalRows > MAX_ROWS_PER_IMPORT) {
+      return NextResponse.json(
+        {
+          error: `File contains too many rows. Maximum ${MAX_ROWS_PER_IMPORT} rows allowed per import.`,
+          totalRows: parseResult.totalRows,
+          limit: MAX_ROWS_PER_IMPORT
         },
         { status: 400 }
       );

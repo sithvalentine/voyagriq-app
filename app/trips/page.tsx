@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { DataStore } from '@/lib/dataStore';
 import { Trip } from '@/data/trips';
 import { formatDateRange, filterTrips } from '@/lib/utils';
 import { useTier } from '@/contexts/TierContext';
@@ -54,9 +53,9 @@ export default function TripsOverview() {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('[Trips] Error loading trips:', error);
-          // Fallback to localStorage
-          setTrips(DataStore.getTrips());
+          console.error('[Trips] Error loading trips from database:', error);
+          // Do NOT fall back to localStorage - show empty state for data consistency
+          setTrips([]);
           return;
         }
 
@@ -99,8 +98,8 @@ export default function TripsOverview() {
         setTrips(convertedTrips);
       } catch (error) {
         console.error('[Trips] Error in loadTrips:', error);
-        // Fallback to localStorage
-        setTrips(DataStore.getTrips());
+        // Do NOT fall back to localStorage - show empty state for data consistency
+        setTrips([]);
       }
     };
 
@@ -452,10 +451,9 @@ export default function TripsOverview() {
   };
 
   const handleImportSuccess = () => {
-    // Reload trips from DataStore after successful import
-    setTrips(DataStore.getTrips());
+    // Reload trips from Supabase after successful import
     setIsImportModalOpen(false);
-    // Optionally refresh the page to ensure all data is in sync
+    // Refresh the page to reload trips from Supabase
     window.location.reload();
   };
 

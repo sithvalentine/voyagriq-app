@@ -3,91 +3,152 @@
 import Link from 'next/link';
 import { useTier } from '@/contexts/TierContext';
 import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 interface APIKey {
   id: string;
   name: string;
-  key: string;
-  created: Date;
-  lastUsed: Date | null;
-  requests: number;
+  key?: string; // Only present when first created
+  key_prefix: string;
+  created_at: Date;
+  last_used_at: Date | null;
+  requests_count: number;
+  rate_limit: number;
+  is_active: boolean;
 }
 
 export default function APIKeysPage() {
   const { currentTier } = useTier();
   const isPremium = currentTier === 'premium';
 
-  // Load API keys from localStorage
   const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
-  const [showKey, setShowKey] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [showNewKey, setShowNewKey] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load API keys from localStorage on mount
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Load API keys from backend
   useEffect(() => {
     if (isPremium) {
-      const stored = localStorage.getItem('voyagriq-api-keys');
-      if (stored) {
-        try {
-          const keys = JSON.parse(stored);
-          // Convert date strings back to Date objects
-          const parsedKeys = keys.map((k: any) => ({
-            ...k,
-            created: new Date(k.created),
-            lastUsed: k.lastUsed ? new Date(k.lastUsed) : null,
-          }));
-          setApiKeys(parsedKeys);
-        } catch (e) {
-          console.error('Error loading API keys:', e);
-        }
-      } else {
-        // Create demo key for Premium users on first visit
-        const demoKey: APIKey = {
-          id: 'key_demo_premium',
-          name: 'Demo API Key',
-          key: 'tci_premium_demo_key_12345',
-          created: new Date(),
-          lastUsed: null,
-          requests: 0,
-        };
-        setApiKeys([demoKey]);
-        localStorage.setItem('voyagriq-api-keys', JSON.stringify([demoKey]));
-      }
+      loadAPIKeys();
+    } else {
+      setIsLoading(false);
     }
-    setIsLoaded(true);
   }, [isPremium]);
 
-  // Save API keys to localStorage whenever they change
-  useEffect(() => {
-    if (isLoaded && isPremium) {
-      localStorage.setItem('voyagriq-api-keys', JSON.stringify(apiKeys));
+  const loadAPIKeys = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await fetch('/api/api-keys', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load API keys');
+      }
+
+      const data = await response.json();
+      setApiKeys(data.apiKeys || []);
+    } catch (err: any) {
+      console.error('Error loading API keys:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-  }, [apiKeys, isLoaded, isPremium]);
-
-  const handleCreateKey = () => {
-    if (!newKeyName.trim()) return;
-
-    // Generate a fake API key
-    const newKey: APIKey = {
-      id: `key_${Date.now()}`,
-      name: newKeyName,
-      key: `tci_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-      created: new Date(),
-      lastUsed: null,
-      requests: 0,
-    };
-
-    setApiKeys([...apiKeys, newKey]);
-    setShowKey(newKey.key);
-    setNewKeyName('');
-    setShowCreateModal(false);
   };
 
-  const handleDeleteKey = (id: string) => {
-    if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
-      setApiKeys(apiKeys.filter(key => key.id !== id));
+  const handleCreateKey = async () => {
+    if (!newKeyName.trim()) return;
+
+    try {
+      setIsCreating(true);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await fetch('/api/api-keys', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: newKeyName })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create API key');
+      }
+
+      const data = await response.json();
+      setShowNewKey(data.apiKey.key);
+      setNewKeyName('');
+      setShowCreateModal(false);
+
+      // Reload API keys list
+      await loadAPIKeys();
+    } catch (err: any) {
+      console.error('Error creating API key:', err);
+      setError(err.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    if (!confirm('Are you sure you want to delete this API key? This action cannot be undone and will immediately revoke access.')) {
+      return;
+    }
+
+    try {
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await fetch('/api/api-keys', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ keyId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete API key');
+      }
+
+      // Reload API keys list
+      await loadAPIKeys();
+    } catch (err: any) {
+      console.error('Error deleting API key:', err);
+      setError(err.message);
     }
   };
 
@@ -124,11 +185,6 @@ export default function APIKeysPage() {
                       Upgrade to Premium
                     </button>
                   </Link>
-                  <Link href="/api-docs">
-                    <button className="px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors cursor-pointer">
-                      View API Documentation
-                    </button>
-                  </Link>
                 </div>
               </div>
             </div>
@@ -160,24 +216,27 @@ export default function APIKeysPage() {
           </div>
         </div>
 
-        {/* API Documentation Link */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📖</span>
-            <div className="flex-1">
-              <div className="font-semibold text-blue-900">Need help getting started?</div>
-              <div className="text-sm text-blue-700">Check out our comprehensive API documentation</div>
-            </div>
-            <Link href="/api-docs">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm cursor-pointer">
-                View Docs
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <div className="font-semibold text-red-900">Error</div>
+                <div className="text-sm text-red-700">{error}</div>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800"
+              >
+                ✕
               </button>
-            </Link>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* New Key Display Modal */}
-        {showKey && (
+        {/* New Key Display */}
+        {showNewKey && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6 mb-6">
             <div className="flex items-start gap-3 mb-4">
               <span className="text-2xl">✓</span>
@@ -187,9 +246,9 @@ export default function APIKeysPage() {
                   Make sure to copy your API key now. You won't be able to see it again!
                 </p>
                 <div className="bg-white border-2 border-green-400 rounded-lg p-4 font-mono text-sm break-all relative">
-                  {showKey}
+                  {showNewKey}
                   <button
-                    onClick={() => copyToClipboard(showKey, 'new-key')}
+                    onClick={() => copyToClipboard(showNewKey, 'new-key')}
                     className="absolute top-2 right-2 px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 cursor-pointer"
                   >
                     {copiedKeyId === 'new-key' ? '✓ Copied' : 'Copy'}
@@ -198,7 +257,7 @@ export default function APIKeysPage() {
               </div>
             </div>
             <button
-              onClick={() => setShowKey(null)}
+              onClick={() => setShowNewKey(null)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm cursor-pointer"
             >
               Got it
@@ -210,7 +269,12 @@ export default function APIKeysPage() {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Your API Keys</h2>
 
-          {apiKeys.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">⏳</div>
+              <p className="text-gray-600">Loading API keys...</p>
+            </div>
+          ) : apiKeys.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🔑</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">No API Keys Yet</h3>
@@ -231,42 +295,44 @@ export default function APIKeysPage() {
                       <h3 className="text-lg font-bold text-gray-900">{key.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <div className="text-sm text-gray-500 font-mono">
-                          {key.key.substring(0, 20)}...
+                          {key.key_prefix}...
                         </div>
-                        <button
-                          onClick={() => copyToClipboard(key.key, key.id)}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-xs font-semibold cursor-pointer"
-                          title="Copy full API key"
-                        >
-                          {copiedKeyId === key.id ? '✓ Copied' : 'Copy'}
-                        </button>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${key.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {key.is_active ? 'Active' : 'Inactive'}
+                        </span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleDeleteKey(key.id)}
                       className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-semibold cursor-pointer"
                     >
-                      Delete
+                      Revoke
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <div className="text-gray-500">Created</div>
                       <div className="font-medium text-gray-900">
-                        {key.created.toLocaleDateString()}
+                        {new Date(key.created_at).toLocaleDateString()}
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-500">Last Used</div>
                       <div className="font-medium text-gray-900">
-                        {key.lastUsed ? key.lastUsed.toLocaleDateString() : 'Never'}
+                        {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Never'}
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-500">Requests</div>
                       <div className="font-medium text-gray-900">
-                        {key.requests.toLocaleString()}
+                        {key.requests_count.toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Rate Limit</div>
+                      <div className="font-medium text-gray-900">
+                        {key.rate_limit}/hour
                       </div>
                     </div>
                   </div>
@@ -293,6 +359,7 @@ export default function APIKeysPage() {
                   placeholder="e.g., Production Server, Development, Mobile App"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   autoFocus
+                  disabled={isCreating}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Choose a descriptive name to help you identify this key later
@@ -305,16 +372,17 @@ export default function APIKeysPage() {
                     setShowCreateModal(false);
                     setNewKeyName('');
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
+                  disabled={isCreating}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateKey}
-                  disabled={!newKeyName.trim()}
+                  disabled={!newKeyName.trim() || isCreating}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  Create Key
+                  {isCreating ? 'Creating...' : 'Create Key'}
                 </button>
               </div>
             </div>

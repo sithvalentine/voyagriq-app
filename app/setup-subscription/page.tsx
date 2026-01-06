@@ -12,6 +12,7 @@ function SetupSubscriptionContent() {
   const [showOptions, setShowOptions] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const tier = searchParams.get('tier') || 'starter';
+  const isExpired = searchParams.get('expired') === 'true';
 
   const redirectToCheckout = async () => {
     if (!user || isRedirecting) return;
@@ -56,20 +57,20 @@ function SetupSubscriptionContent() {
 
     // Check if they've been here before (from Stripe back button)
     const hasSeenPaymentPage = sessionStorage.getItem('seen-payment-page');
+    const attemptCount = parseInt(sessionStorage.getItem('payment-attempts') || '0');
 
     if (hasSeenPaymentPage === 'true') {
-      // They clicked back from Stripe without completing payment
-      // Sign them out immediately to prevent unauthorized access
+      // They came back from Stripe (back button or cancelled)
+      // Give them options instead of auto-signing out
       sessionStorage.removeItem('seen-payment-page');
-      signOut().then(() => {
-        router.push('/login?message=payment_required');
-      });
+      sessionStorage.setItem('payment-attempts', String(attemptCount + 1));
+      setShowOptions(true);
     } else {
       // First time here, auto-redirect to Stripe
       sessionStorage.setItem('seen-payment-page', 'true');
       redirectToCheckout();
     }
-  }, [user, router, signOut]);
+  }, [user, router]);
 
   // Show options if they returned from Stripe (back button) or error
   if (showOptions || error) {
@@ -93,9 +94,19 @@ function SetupSubscriptionContent() {
               </div>
             )}
 
+            {isExpired && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-amber-800">
+                  <strong>Payment Required:</strong> Your 24-hour grace period has expired.
+                  Please complete payment to access your account, or contact support for assistance.
+                </p>
+              </div>
+            )}
+
             <p className="text-gray-600 mb-6">
-              To access VoyagrIQ, you need to complete your subscription payment.
-              Choose an option below:
+              {isExpired
+                ? 'Complete your payment below to regain access to VoyagrIQ:'
+                : 'To access VoyagrIQ, you need to complete your subscription payment. Choose an option below:'}
             </p>
           </div>
 

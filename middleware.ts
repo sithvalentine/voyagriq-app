@@ -96,23 +96,36 @@ export async function middleware(req: NextRequest) {
   // SECURITY: Check if user has paid (prevents "back button" bypass)
   // Users must complete Stripe checkout before accessing protected pages
   if (isProtectedPath && user) {
-    // Allow access to setup-subscription page (where they pay)
+    // Allow access to setup-subscription and pricing pages (where they can pay)
     if (req.nextUrl.pathname.startsWith('/setup-subscription') ||
-        req.nextUrl.pathname.startsWith('/subscription/success')) {
+        req.nextUrl.pathname.startsWith('/subscription/success') ||
+        req.nextUrl.pathname.startsWith('/pricing')) {
       return response;
     }
 
     // Check if user has completed payment (has stripe_customer_id)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('stripe_customer_id, subscription_tier')
+      .select('stripe_customer_id, subscription_tier, created_at')
       .eq('id', user.id)
       .single();
 
-    // If no stripe_customer_id, they haven't paid yet - force them to payment
+    // If no stripe_customer_id, they haven't paid yet
     if (profile && !profile.stripe_customer_id) {
       const tier = profile.subscription_tier || 'starter';
-      return NextResponse.redirect(new URL(`/setup-subscription?tier=${tier}`, req.url));
+
+      // Check if account is older than 24 hours - give grace period for payment
+      const accountAge = Date.now() - new Date(profile.created_at).getTime();
+      const gracePeriodHours = 24;
+      const gracePeriodMs = gracePeriodHours * 60 * 60 * 1000;
+
+      if (accountAge > gracePeriodMs) {
+        // Grace period expired - require them to complete payment or contact support
+        return NextResponse.redirect(new URL(`/setup-subscription?tier=${tier}&expired=true`, req.url));
+      } else {
+        // Still within grace period - redirect to payment
+        return NextResponse.redirect(new URL(`/setup-subscription?tier=${tier}`, req.url));
+      }
     }
   }
 

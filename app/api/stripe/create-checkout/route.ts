@@ -2,12 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe, getStripePriceId } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { SUBSCRIPTION_TIERS } from '@/lib/subscription';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: Prevent checkout session creation abuse
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(clientIP, RATE_LIMITS.AUTH_PER_IP.limit, RATE_LIMITS.AUTH_PER_IP.windowMs);
+
+    if (!rateLimit.allowed) {
+      console.warn(`[create-checkout] Rate limit exceeded for IP: ${clientIP}`);
+      return NextResponse.json(
+        { error: 'Too many checkout attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: rateLimit.headers
+        }
+      );
+    }
+
     const { tier, userId, registrationData, interval = 'monthly' } = await request.json();
 
     if (!tier) {
@@ -38,9 +54,9 @@ export async function POST(request: NextRequest) {
     let sessionMetadata: any = { tier };
 
     // NEW REGISTRATION FLOW: If registrationData is provided, this is a new registration
-    // Account will be created after payment via webhook
+    // SECURITY: Create account BEFORE payment to avoid storing password in Stripe metadata
     if (registrationData) {
-      console.log('[create-checkout] NEW REGISTRATION - No account created yet');
+      console.log('[create-checkout] NEW REGISTRATION - Creating account before payment');
       console.log('[create-checkout] Email:', registrationData.email, 'Tier:', tier);
 
       // Validate registration data
@@ -51,17 +67,46 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      customerEmail = registrationData.email;
-      clientReferenceId = `pending_${Date.now()}_${registrationData.email}`;
+      // Create Supabase account NOW (before payment)
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // Store registration data in metadata for webhook to create account after payment
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: registrationData.email,
+        password: registrationData.password,
+        email_confirm: false, // Require email verification for security
+        user_metadata: {
+          full_name: registrationData.fullName,
+        }
+      });
+
+      if (authError || !authData.user) {
+        console.error('[create-checkout] Error creating user:', authError);
+        return NextResponse.json(
+          { error: authError?.message || 'Failed to create account' },
+          { status: 400 }
+        );
+      }
+
+      console.log('[create-checkout] User created:', authData.user.id);
+
+      // Update profile with agency name if provided
+      if (registrationData.agencyName) {
+        await supabase
+          .from('profiles')
+          .update({
+            full_name: registrationData.fullName,
+            // Could add agency_name field to profiles table if needed
+          })
+          .eq('id', authData.user.id);
+      }
+
+      customerEmail = registrationData.email;
+      clientReferenceId = authData.user.id;
+
+      // SECURITY: Only store userId in metadata, NOT password
       sessionMetadata = {
         tier,
-        isNewRegistration: 'true',
-        registrationEmail: registrationData.email,
-        registrationPassword: registrationData.password,
-        registrationFullName: registrationData.fullName,
-        registrationAgencyName: registrationData.agencyName || '',
+        userId: authData.user.id, // Just pass user ID to webhook
       };
     }
     // EXISTING USER FLOW: userId provided, account already exists
