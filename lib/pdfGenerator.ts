@@ -175,11 +175,13 @@ export function generateTripReportPDF(
 
     // Top Spending Categories
     const categories = [
-      { name: 'Flight', amount: trip.Flight_Cost },
       { name: 'Hotel', amount: trip.Hotel_Cost },
+      { name: 'Flight', amount: trip.Flight_Cost },
+      { name: 'Meals', amount: trip.Meals_Cost },
       { name: 'Activities', amount: trip.Activities_Tours },
       { name: 'Ground Transport', amount: trip.Ground_Transport },
-      { name: 'Meals', amount: trip.Meals_Cost },
+      { name: 'Insurance', amount: trip.Insurance_Cost },
+      { name: 'Other', amount: trip.Other_Costs },
     ].sort((a, b) => b.amount - a.amount);
 
     doc.setFont('helvetica', 'bold');
