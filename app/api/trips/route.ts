@@ -3,6 +3,7 @@ import { withAuth } from '@/lib/apiAuth';
 import { Trip } from '@/data/trips';
 import { getServiceRoleClient } from '@/lib/supabase';
 import { corsPreflightHandler, addCorsHeaders } from '@/lib/cors';
+import { addCacheHeaders, handleConditionalRequest, CACHE_DURATIONS } from '@/lib/apiCache';
 
 // SECURITY: All authentication, rate limiting, and premium tier checks handled by withAuth middleware
 
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      const response = NextResponse.json({
+      const responseData = {
         trips,
         pagination: {
           total: count || 0,
@@ -143,7 +144,17 @@ export async function GET(request: NextRequest) {
           offset,
           hasMore: offset + limit < (count || 0),
         },
-      });
+      };
+
+      // Check if client has valid cached version (304 Not Modified)
+      const conditionalResponse = handleConditionalRequest(req, responseData);
+      if (conditionalResponse) {
+        return addCorsHeaders(conditionalResponse, request.headers.get('origin'));
+      }
+
+      // Create response with cache headers
+      const response = NextResponse.json(responseData);
+      addCacheHeaders(response, 'private', CACHE_DURATIONS.TRIPS_LIST, responseData);
 
       return addCorsHeaders(response, request.headers.get('origin'));
     } catch (error) {

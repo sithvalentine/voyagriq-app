@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DataStore } from '@/lib/dataStore';
 import { withAuth } from '@/lib/apiAuth';
+import { addCacheHeaders, handleConditionalRequest, CACHE_DURATIONS } from '@/lib/apiCache';
 
 interface VendorData {
   name: string;
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
         return acc;
       }, {} as Record<string, { category: string; totalSpent: number; vendorCount: number; tripCount: number }>);
 
-      return NextResponse.json({
+      const responseData = {
         vendors,
         summary: {
           totalVendors: vendors.length,
@@ -143,7 +144,19 @@ export async function GET(request: NextRequest) {
         filters: {
           category,
         },
-      });
+      };
+
+      // Check if client has valid cached version (304 Not Modified)
+      const conditionalResponse = handleConditionalRequest(req, responseData);
+      if (conditionalResponse) {
+        return conditionalResponse;
+      }
+
+      // Create response with cache headers (5 minutes for vendor stats)
+      const response = NextResponse.json(responseData);
+      addCacheHeaders(response, 'private', CACHE_DURATIONS.VENDORS, responseData);
+
+      return response;
     } catch (error) {
       console.error('Error fetching vendors:', error);
       return NextResponse.json(
