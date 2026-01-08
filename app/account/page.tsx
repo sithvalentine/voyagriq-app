@@ -5,12 +5,18 @@ import { DataStore } from '@/lib/dataStore';
 import { SUBSCRIPTION_TIERS, getNextTier } from '@/lib/subscription';
 import { useTier } from '@/contexts/TierContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function AccountPage() {
   const { currentTier, userName, userEmail, trialStartDate, isTrialActive, daysLeftInTrial, setCurrentTier, devMode, toggleDevMode } = useTier();
   const { user } = useAuth();
   const [billingLoading, setBillingLoading] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+
+  // Check if running on localhost
+  useEffect(() => {
+    setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  }, []);
   const tierInfo = SUBSCRIPTION_TIERS[currentTier];
   const nextTier = getNextTier(currentTier);
   const nextTierInfo = nextTier ? SUBSCRIPTION_TIERS[nextTier] : null;
@@ -112,7 +118,8 @@ export default function AccountPage() {
           <p className="text-gray-600">Manage your subscription and account preferences</p>
         </div>
 
-        {/* Development Mode Toggle */}
+        {/* Development Mode Toggle - Only show on localhost */}
+        {isLocalhost && (
         <div className="bg-gradient-to-r from-gray-50 to-slate-50 border-2 border-gray-300 rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -135,6 +142,7 @@ export default function AccountPage() {
             Enable developer mode to access tier switching and sample data tools for testing
           </p>
         </div>
+        )}
 
         {/* Development Tier Switcher - Only visible when dev mode is on */}
         {devMode && (

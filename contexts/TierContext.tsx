@@ -39,10 +39,11 @@ export function TierProvider({ children }: { children: ReactNode }) {
   const [devMode, setDevMode] = useState(false);
   const [testMode, setTestMode] = useState(false);
 
-  // Check for test mode on mount (client-side only)
+  // Check for test mode on mount (client-side only) - ONLY on localhost
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isTestMode = localStorage.getItem('voyagriq-dev-mode') === 'true';
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const isTestMode = isLocalhost && localStorage.getItem('voyagriq-dev-mode') === 'true';
       setTestMode(isTestMode);
     }
   }, []);
@@ -67,8 +68,11 @@ export function TierProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from Supabase when user changes
   useEffect(() => {
     async function loadProfile() {
-      // Check for test mode first (bypasses all Supabase checks)
-      const testMode = typeof window !== 'undefined' &&
+      // Check for test mode first (bypasses all Supabase checks) - ONLY on localhost
+      const isLocalhost = typeof window !== 'undefined' &&
+                          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const testMode = isLocalhost &&
+                       typeof window !== 'undefined' &&
                        localStorage.getItem('voyagriq-dev-mode') === 'true';
 
       if (testMode) {
@@ -200,6 +204,14 @@ export function TierProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleDevMode = () => {
+    // Only allow toggling dev mode on localhost
+    if (typeof window !== 'undefined') {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalhost) {
+        console.warn('Dev mode can only be enabled on localhost');
+        return;
+      }
+    }
     const newDevMode = !devMode;
     setDevMode(newDevMode);
     localStorage.setItem(DEV_MODE_KEY, newDevMode.toString());
