@@ -27,6 +27,7 @@ export default function TripDetail() {
   const router = useRouter();
   const tripId = params.id as string;
   const [trip, setTrip] = useState<Trip | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   const [allTrips, setAllTrips] = useState<Trip[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -44,6 +45,7 @@ export default function TripDetail() {
           const trips = DataStore.getTrips();
           setAllTrips(trips);
           setTrip(trips.find(t => t.Trip_ID === tripId));
+          setIsLoading(false);
           return;
         }
 
@@ -59,6 +61,7 @@ export default function TripDetail() {
           const trips = DataStore.getTrips();
           setAllTrips(trips);
           setTrip(trips.find(t => t.Trip_ID === tripId));
+          setIsLoading(false);
           return;
         }
 
@@ -100,11 +103,13 @@ export default function TripDetail() {
         console.log(`[Trip Detail] Loaded ${convertedTrips.length} trips from database`);
         setAllTrips(convertedTrips);
         setTrip(convertedTrips.find(t => t.Trip_ID === tripId));
+        setIsLoading(false);
       } catch (error) {
         console.error('[Trip Detail] Error in loadTrip:', error);
         const trips = DataStore.getTrips();
         setAllTrips(trips);
         setTrip(trips.find(t => t.Trip_ID === tripId));
+        setIsLoading(false);
       }
     };
 
@@ -412,6 +417,18 @@ export default function TripDetail() {
     const filename = `trip-${trip.Trip_ID}-${trip.Client_Name.replace(/\s+/g, '_')}-${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
+
+  // Show loading state while fetching trip details
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading trip details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!trip) {
     return (

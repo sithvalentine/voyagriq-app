@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface BulkImportModalProps {
   isOpen: boolean;
@@ -32,6 +32,8 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
   const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -162,6 +164,68 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Focus trap: focus the close button when modal opens
+  useEffect(() => {
+    if (isOpen && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Focus trap: keep focus within modal
+  useEffect(() => {
+    if (!isOpen || !modalRef.current) return;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [isOpen, file, result, isUploading]);
+
   if (!isOpen) {
     console.log('[BulkImportModal] isOpen is false, not rendering');
     return null;
@@ -170,28 +234,37 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
   console.log('[BulkImportModal] isOpen is true, rendering modal');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-         onClick={(e) => {
-           if (e.target === e.currentTarget) {
-             console.log('[BulkImportModal] Backdrop clicked');
-             handleClose();
-           }
-         }}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          console.log('[BulkImportModal] Backdrop clicked');
+          handleClose();
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">Import Trips</h2>
+              <h2 id="modal-title" className="text-2xl font-bold">Import Trips</h2>
               <p className="text-blue-100 mt-1">Upload CSV or Excel file to import multiple trips at once</p>
             </div>
             <button
+              ref={closeButtonRef}
               onClick={handleClose}
               className="text-white hover:text-gray-200 transition-colors cursor-pointer"
               type="button"
+              aria-label="Close import modal"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -281,8 +354,9 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
                   onClick={() => setFile(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                   type="button"
+                  aria-label="Remove selected file"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -308,6 +382,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
                 disabled={isUploading}
                 className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 type="button"
+                aria-label={isUploading ? 'Processing file' : 'Upload and import trips from file'}
               >
                 {isUploading ? 'Processing...' : 'Upload and Import'}
               </button>
@@ -399,6 +474,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
                   }}
                   className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors cursor-pointer"
                   type="button"
+                  aria-label="Import another file"
                 >
                   Import Another File
                 </button>
@@ -407,6 +483,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
                     onClick={handleClose}
                     className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
                     type="button"
+                    aria-label="Close modal and view imported trips"
                   >
                     Done
                   </button>

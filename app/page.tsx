@@ -58,22 +58,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Positioning Section */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mb-16">
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
-            VoyagrIQ is built for travel advisors and agencies that are done guessing about profitability.
-          </p>
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed mt-4">
-            It turns your trip data into clear dashboards and reports that show cost per traveler, commission revenue,
-            and true profit, with exports to PDF, Excel, and CSV when you need to share.
-          </p>
-          <p className="text-lg md:text-xl text-gray-700 leading-relaxed mt-4">
-            Instead of fighting spreadsheets or heavy all-in-one systems, you get travel-specific analytics and vendor insights that help you price better, negotiate smarter, and grow with confidence.
-          </p>
-        </div>
-      </div>
-
       {/* Pricing Section */}
       <div id="pricing" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-16 mb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -247,6 +231,22 @@ export default function LandingPage() {
               </button>
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Positioning Section */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mb-16">
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+            VoyagrIQ is built for travel advisors and agencies that are done guessing about profitability.
+          </p>
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed mt-4">
+            It turns your trip data into clear dashboards and reports that show cost per traveler, commission revenue,
+            and true profit, with exports to PDF, Excel, and CSV when you need to share.
+          </p>
+          <p className="text-lg md:text-xl text-gray-700 leading-relaxed mt-4">
+            Instead of fighting spreadsheets or heavy all-in-one systems, you get travel-specific analytics and vendor insights that help you price better, negotiate smarter, and grow with confidence.
+          </p>
         </div>
       </div>
 

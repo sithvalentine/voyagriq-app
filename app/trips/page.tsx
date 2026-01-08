@@ -20,6 +20,7 @@ type SortDirection = 'asc' | 'desc';
 export default function TripsOverview() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedAgencies, setSelectedAgencies] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
@@ -42,6 +43,7 @@ export default function TripsOverview() {
 
         if (!user) {
           console.log('[Trips] No user found, skipping trip load');
+          setIsLoading(false);
           return;
         }
 
@@ -56,6 +58,7 @@ export default function TripsOverview() {
           console.error('[Trips] Error loading trips from database:', error);
           // Do NOT fall back to localStorage - show empty state for data consistency
           setTrips([]);
+          setIsLoading(false);
           return;
         }
 
@@ -96,10 +99,12 @@ export default function TripsOverview() {
 
         console.log(`[Trips] Loaded ${convertedTrips.length} trips from database`);
         setTrips(convertedTrips);
+        setIsLoading(false);
       } catch (error) {
         console.error('[Trips] Error in loadTrips:', error);
         // Do NOT fall back to localStorage - show empty state for data consistency
         setTrips([]);
+        setIsLoading(false);
       }
     };
 
@@ -505,6 +510,18 @@ export default function TripsOverview() {
     return <TrialExpiredScreen />;
   }
 
+  // Show loading state while fetching trips
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading trips...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show welcome screen if no data
   if (trips.length === 0) {
     return (
@@ -559,20 +576,21 @@ export default function TripsOverview() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
+      <div className="mb-8 flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-gray-900">All Trips</h1>
           <p className="mt-2 text-gray-600">
             View and analyze all trip bookings across your agencies
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 w-full md:w-auto">
           <button
             onClick={() => setShowQuickAdd(!showQuickAdd)}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-sm cursor-pointer"
             type="button"
+            aria-label={showQuickAdd ? 'Cancel adding trip' : 'Add new trip'}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             {showQuickAdd ? 'Cancel' : 'Add Trip'}
@@ -581,8 +599,9 @@ export default function TripsOverview() {
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
             type="button"
+            aria-label="Import trips from CSV file"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 1 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             Import Trips
@@ -593,8 +612,9 @@ export default function TripsOverview() {
                 onClick={handleExportCSV}
                 type="button"
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-sm cursor-pointer"
+                aria-label="Export all trips to CSV file"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Export CSV
@@ -603,8 +623,9 @@ export default function TripsOverview() {
               onClick={handleExportExcel}
               type="button"
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors shadow-sm cursor-pointer"
+              aria-label="Export all trips to Excel file"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Export Excel
@@ -613,8 +634,9 @@ export default function TripsOverview() {
               onClick={handleExportPDF}
               type="button"
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+              aria-label="Export all trips to PDF file"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               Export PDF
@@ -858,7 +880,7 @@ export default function TripsOverview() {
             <thead className="bg-gray-50">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                  className="sticky left-0 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors select-none shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                   onClick={() => handleSort('tripId')}
                 >
                   <div className="flex items-center gap-2">
@@ -975,8 +997,8 @@ export default function TripsOverview() {
                 </tr>
               ) : (
                 sortedTrips.map(trip => (
-                  <tr key={trip.Trip_ID} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={trip.Trip_ID} className="hover:bg-gray-50 transition-colors group">
+                    <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-white group-hover:bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors">
                       {trip.Trip_ID}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
