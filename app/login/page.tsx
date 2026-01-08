@@ -14,6 +14,12 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+
+  // Check if running on localhost
+  useEffect(() => {
+    setIsLocalhost(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  }, []);
 
   useEffect(() => {
     // Check if user was redirected here after canceling payment
@@ -39,6 +45,12 @@ function LoginContent() {
   };
 
   const handleDevLogin = async () => {
+    // Only allow on localhost
+    if (!isLocalhost) {
+      console.warn('Dev mode can only be enabled on localhost');
+      return;
+    }
+
     // Enable dev mode first
     localStorage.setItem('voyagriq-dev-mode', 'true');
 
@@ -163,7 +175,8 @@ function LoginContent() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
 
-            {/* Dev Mode Quick Login */}
+            {/* Dev Mode Quick Login - Only show on localhost */}
+            {isLocalhost && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <button
                 type="button"
@@ -177,6 +190,7 @@ function LoginContent() {
                 For testing only - Auto-enables dev mode & bypasses Stripe
               </p>
             </div>
+            )}
 
             <p className="mt-6 text-center text-sm text-gray-600">
               Don't have an account?{' '}
