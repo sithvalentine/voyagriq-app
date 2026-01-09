@@ -121,10 +121,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Only redirect to trips if we didn't redirect to Stripe
-      // Redirect to trips page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/trips';
-      }
+      // Use router.push for smooth navigation without page reload
+      router.push('/trips');
       return { error: null };
     } catch (error: any) {
       console.error('Sign in error:', error);
