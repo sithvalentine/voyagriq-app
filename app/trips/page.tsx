@@ -31,6 +31,8 @@ export default function TripsOverview() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [selectedTripIds, setSelectedTripIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { currentTier, isTrialExpired, isSignedIn } = useTier();
   const { currency } = useCurrency();
 
@@ -462,6 +464,64 @@ export default function TripsOverview() {
     window.location.reload();
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedTripIds.length === 0) return;
+
+    const confirmMessage = `Are you sure you want to delete ${selectedTripIds.length} trip${selectedTripIds.length === 1 ? '' : 's'}? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+
+    setIsDeleting(true);
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert('Please log in to delete trips.');
+        setIsDeleting(false);
+        return;
+      }
+
+      // Delete trips from Supabase
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('user_id', user.id)
+        .in('trip_id', selectedTripIds);
+
+      if (error) {
+        console.error('[BulkDelete] Error deleting trips:', error);
+        alert(`Failed to delete trips: ${error.message}`);
+        setIsDeleting(false);
+        return;
+      }
+
+      // Update local state
+      setTrips(prevTrips => prevTrips.filter(trip => !selectedTripIds.includes(trip.Trip_ID)));
+      setSelectedTripIds([]);
+      alert(`Successfully deleted ${selectedTripIds.length} trip${selectedTripIds.length === 1 ? '' : 's'}.`);
+    } catch (error: any) {
+      console.error('[BulkDelete] Error:', error);
+      alert(`Failed to delete trips: ${error.message}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleTripSelection = (tripId: string) => {
+    setSelectedTripIds(prev =>
+      prev.includes(tripId) ? prev.filter(id => id !== tripId) : [...prev, tripId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTripIds.length === sortedTrips.length) {
+      setSelectedTripIds([]);
+    } else {
+      setSelectedTripIds(sortedTrips.map(trip => trip.Trip_ID));
+    }
+  };
+
   const handleExportPDF = () => {
     if (filteredTrips.length === 0) return;
 
@@ -606,6 +666,20 @@ export default function TripsOverview() {
             </svg>
             Import Trips
           </button>
+          {selectedTripIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              aria-label={`Delete ${selectedTripIds.length} selected trip${selectedTripIds.length === 1 ? '' : 's'}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {isDeleting ? 'Deleting...' : `Delete ${selectedTripIds.length} Selected`}
+            </button>
+          )}
           {filteredTrips.length > 0 && (
             <>
               <button
@@ -879,8 +953,17 @@ export default function TripsOverview() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="sticky left-0 z-10 px-4 py-3 bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                  <input
+                    type="checkbox"
+                    checked={selectedTripIds.length === sortedTrips.length && sortedTrips.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    aria-label="Select all trips"
+                  />
+                </th>
                 <th
-                  className="sticky left-0 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors select-none shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                  className="sticky left-12 z-10 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors select-none shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                   onClick={() => handleSort('tripId')}
                 >
                   <div className="flex items-center gap-2">
@@ -991,14 +1074,23 @@ export default function TripsOverview() {
             <tbody className="bg-white divide-y divide-gray-200">
               {sortedTrips.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                     No trips found. Try adjusting your filters.
                   </td>
                 </tr>
               ) : (
                 sortedTrips.map(trip => (
                   <tr key={trip.Trip_ID} className="hover:bg-gray-50 transition-colors group">
-                    <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-white group-hover:bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors">
+                    <td className="sticky left-0 z-10 px-4 py-4 bg-white group-hover:bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={selectedTripIds.includes(trip.Trip_ID)}
+                        onChange={() => toggleTripSelection(trip.Trip_ID)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        aria-label={`Select trip ${trip.Trip_ID}`}
+                      />
+                    </td>
+                    <td className="sticky left-12 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-white group-hover:bg-gray-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors">
                       {trip.Trip_ID}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -93,18 +93,21 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
     setResult(null);
 
     try {
-      // Get Supabase session token
+      // Get Supabase session token with error handling
       const { supabase } = await import('@/lib/supabase');
-      const { data: { session } } = await supabase.auth.getSession();
 
-      if (!session) {
+      // Use a more reliable auth check that won't trigger redirects
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.access_token) {
+        console.error('[BulkImport] Session error:', sessionError);
         setResult({
           success: false,
           totalRows: 0,
           insertedCount: 0,
           skippedCount: 0,
           failedCount: 0,
-          message: 'Please log in to import trips.'
+          message: 'Session expired. Please refresh the page and log in again.'
         });
         setIsUploading(false);
         return;
@@ -124,6 +127,20 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
       });
 
       setUploadProgress(70);
+
+      // Handle 401 unauthorized without triggering redirects
+      if (response.status === 401) {
+        setResult({
+          success: false,
+          totalRows: 0,
+          insertedCount: 0,
+          skippedCount: 0,
+          failedCount: 0,
+          message: 'Session expired. Please refresh the page and log in again.'
+        });
+        setIsUploading(false);
+        return;
+      }
 
       const data: ImportResult = await response.json();
 

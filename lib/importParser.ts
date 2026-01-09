@@ -225,7 +225,7 @@ export async function parseCSV(fileContent: string): Promise<ParseResult> {
   return new Promise((resolve) => {
     Papa.parse(fileContent, {
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy', // Skip all empty lines including those with just whitespace
       transformHeader: (header: string) => {
         // Normalize headers to match our field names
         return header.trim().replace(/\s+/g, '_');
@@ -236,6 +236,12 @@ export async function parseCSV(fileContent: string): Promise<ParseResult> {
         const seenTripIds = new Set<string>();
 
         results.data.forEach((row: any, index: number) => {
+          // Skip completely empty rows
+          const hasAnyData = Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
+          if (!hasAnyData) {
+            return; // Skip this row entirely
+          }
+
           const rowNumber = index + 2; // +2 because: +1 for 1-based indexing, +1 for header row
 
           const { trip, errors: rowErrors } = validateTrip(row, rowNumber);
@@ -311,6 +317,12 @@ export async function parseExcel(fileBuffer: Buffer): Promise<ParseResult> {
     const seenTripIds = new Set<string>();
 
     jsonData.forEach((row: any, index: number) => {
+      // Skip completely empty rows
+      const hasAnyData = Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
+      if (!hasAnyData) {
+        return; // Skip this row entirely
+      }
+
       const rowNumber = index + 2; // +2 because: +1 for 1-based indexing, +1 for header row
 
       // Normalize column names (Excel might have spaces)
