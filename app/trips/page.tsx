@@ -457,11 +457,73 @@ export default function TripsOverview() {
     XLSX.writeFile(wb, `all-trips-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const handleImportSuccess = () => {
-    // Reload trips from Supabase after successful import
+  const handleImportSuccess = async () => {
+    // Close modal first for immediate feedback
     setIsImportModalOpen(false);
-    // Refresh the page to reload trips from Supabase
-    window.location.reload();
+
+    // Reload trips data smoothly without page refresh
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.log('[Trips] No user found after import');
+        return;
+      }
+
+      // Fetch updated trips from Supabase
+      const { data: dbTrips, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[Trips] Error reloading trips:', error);
+        return;
+      }
+
+      // Convert database trips to Trip format (same as initial load)
+      const convertedTrips: Trip[] = (dbTrips || []).map((dbTrip: any) => {
+        const tripTotalCost = (dbTrip.trip_total_cost || 0) / 100;
+        const totalTravelers = dbTrip.total_travelers || 1;
+
+        return {
+          Trip_ID: dbTrip.trip_id,
+          Client_Name: dbTrip.client_name,
+          Travel_Agency: dbTrip.travel_agency || '',
+          Start_Date: dbTrip.start_date,
+          End_Date: dbTrip.end_date,
+          Destination_Country: dbTrip.destination_country,
+          Destination_City: dbTrip.destination_city || '',
+          Adults: dbTrip.adults || 0,
+          Children: dbTrip.children || 0,
+          Total_Travelers: totalTravelers,
+          Flight_Cost: (dbTrip.flight_cost || 0) / 100,
+          Hotel_Cost: (dbTrip.hotel_cost || 0) / 100,
+          Ground_Transport: (dbTrip.ground_transport || 0) / 100,
+          Activities_Tours: (dbTrip.activities_tours || 0) / 100,
+          Meals_Cost: (dbTrip.meals_cost || 0) / 100,
+          Insurance_Cost: (dbTrip.insurance_cost || 0) / 100,
+          Other_Costs: (dbTrip.other_costs || 0) / 100,
+          Trip_Total_Cost: tripTotalCost,
+          Cost_Per_Traveler: tripTotalCost / totalTravelers,
+          Currency: dbTrip.currency || 'USD',
+          Commission_Type: dbTrip.commission_rate ? 'percentage' : undefined,
+          Commission_Value: dbTrip.commission_rate || undefined,
+          Agency_Revenue: (dbTrip.commission_amount || 0) / 100,
+          Client_ID: dbTrip.client_id || '',
+          Client_Type: dbTrip.client_type || 'individual',
+          Notes: '',
+        };
+      });
+
+      // Update state with new trips - this triggers React re-render smoothly
+      setTrips(convertedTrips);
+      console.log(`[Trips] Reloaded ${convertedTrips.length} trips after import`);
+    } catch (error) {
+      console.error('[Trips] Error in handleImportSuccess:', error);
+    }
   };
 
   const handleBulkDelete = async () => {
