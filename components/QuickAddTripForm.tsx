@@ -27,6 +27,7 @@ export default function QuickAddTripForm({ onAdd, onCancel }: QuickAddTripFormPr
     activitiesTours: '',
     mealsCost: '',
     insuranceCost: '',
+    cruiseCost: '',
     otherCosts: '',
   });
 
@@ -127,9 +128,10 @@ export default function QuickAddTripForm({ onAdd, onCancel }: QuickAddTripFormPr
     const activitiesTours = parseFloat(formData.activitiesTours) || 0;
     const mealsCost = parseFloat(formData.mealsCost) || 0;
     const insuranceCost = parseFloat(formData.insuranceCost) || 0;
+    const cruiseCost = parseFloat(formData.cruiseCost) || 0;
     const otherCosts = parseFloat(formData.otherCosts) || 0;
 
-    const tripTotalCost = flightCost + hotelCost + groundTransport + activitiesTours + mealsCost + insuranceCost + otherCosts;
+    const tripTotalCost = flightCost + hotelCost + groundTransport + activitiesTours + mealsCost + insuranceCost + cruiseCost + otherCosts;
     const totalTravelers = adults + children;
 
     const newTrip: Trip = {
@@ -149,6 +151,7 @@ export default function QuickAddTripForm({ onAdd, onCancel }: QuickAddTripFormPr
       Activities_Tours: activitiesTours,
       Meals_Cost: mealsCost,
       Insurance_Cost: insuranceCost,
+      Cruise_Cost: cruiseCost,
       Other_Costs: otherCosts,
       Trip_Total_Cost: tripTotalCost,
       Cost_Per_Traveler: totalTravelers > 0 ? tripTotalCost / totalTravelers : 0,
@@ -185,6 +188,7 @@ export default function QuickAddTripForm({ onAdd, onCancel }: QuickAddTripFormPr
           activities_tours: Math.round(newTrip.Activities_Tours * 100),
           meals_cost: Math.round(newTrip.Meals_Cost * 100),
           insurance_cost: Math.round(newTrip.Insurance_Cost * 100),
+          cruise_cost: Math.round(newTrip.Cruise_Cost * 100),
           other_costs: Math.round(newTrip.Other_Costs * 100),
           currency: 'USD',
         }]);

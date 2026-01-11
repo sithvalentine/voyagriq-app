@@ -660,6 +660,7 @@ export class EnhancedReportGenerator {
       ['Activities & Tours', costAnalysis.costBreakdown.activities],
       ['Meals', costAnalysis.costBreakdown.meals],
       ['Insurance', costAnalysis.costBreakdown.insurance],
+      ['Cruise', costAnalysis.costBreakdown.cruise],
       ['Other', costAnalysis.costBreakdown.other],
     ].forEach(([category, amount]) => {
       const percent = totalCosts > 0 ? ((amount as number / totalCosts) * 100) : 0;

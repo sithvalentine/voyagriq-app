@@ -82,6 +82,7 @@ export function generateTripReportPDF(
     ['Activities & Tours', formatCurrencyWithSymbol(trip.Activities_Tours, currency), `${((trip.Activities_Tours / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
     ['Meals', formatCurrencyWithSymbol(trip.Meals_Cost, currency), `${((trip.Meals_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
     ['Insurance', formatCurrencyWithSymbol(trip.Insurance_Cost, currency), `${((trip.Insurance_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Cruise', formatCurrencyWithSymbol(trip.Cruise_Cost, currency), `${((trip.Cruise_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
     ['Other', formatCurrencyWithSymbol(trip.Other_Costs, currency), `${((trip.Other_Costs / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
   ];
 
@@ -173,7 +174,7 @@ export function generateTripReportPDF(
     doc.text(formatCurrencyWithSymbol(trip.Cost_Per_Traveler, currency), 70, yPosition);
     yPosition += 10;
 
-    // Top Spending Categories
+    // Top Spending Categories - filter out zero values for proper pie chart rendering
     const categories = [
       { name: 'Hotel', amount: trip.Hotel_Cost },
       { name: 'Flight', amount: trip.Flight_Cost },
@@ -181,8 +182,10 @@ export function generateTripReportPDF(
       { name: 'Activities', amount: trip.Activities_Tours },
       { name: 'Ground Transport', amount: trip.Ground_Transport },
       { name: 'Insurance', amount: trip.Insurance_Cost },
+      { name: 'Cruise', amount: trip.Cruise_Cost },
       { name: 'Other', amount: trip.Other_Costs },
-    ].sort((a, b) => b.amount - a.amount);
+    ].filter(cat => cat.amount > 0) // Only include categories with actual costs
+    .sort((a, b) => b.amount - a.amount);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Top 3 Spending Categories:', 14, yPosition);

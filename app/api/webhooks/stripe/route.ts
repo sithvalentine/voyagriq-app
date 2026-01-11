@@ -3,6 +3,8 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit';
+import { alertWebhookFailure, alertPaymentFailure } from '@/lib/alerts';
+import { trackPaymentSuccess, trackPaymentFailure, trackSubscriptionCancelled } from '@/lib/analytics';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -120,10 +122,21 @@ export async function POST(request: NextRequest) {
 
         if (updateError) {
           console.error('[stripe-webhook] Error updating profile:', updateError);
+          await alertWebhookFailure(event.type, userId, updateError as Error);
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
 
         console.log('[stripe-webhook] Successfully activated subscription for user:', userId);
+
+        // Track payment success
+        const billingCycle = session.metadata?.billing_cycle || 'monthly';
+        await trackPaymentSuccess(
+          userId,
+          tier || 'starter',
+          session.amount_total || 0,
+          session.currency || 'usd',
+          billingCycle
+        );
 
         break;
       }
@@ -209,6 +222,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
 
+        // Track subscription cancellation
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('created_at, subscription_tier')
+          .eq('id', profile.id)
+          .single();
+
+        if (profileData) {
+          const daysActive = Math.floor(
+            (Date.now() - new Date(profileData.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          await trackSubscriptionCancelled(
+            profile.id,
+            profileData.subscription_tier || 'starter',
+            daysActive
+          );
+        }
+
         console.log('[stripe-webhook] Successfully canceled subscription for user:', profile.id);
         break;
       }
@@ -242,8 +273,16 @@ export async function POST(request: NextRequest) {
 
         if (updateError) {
           console.error('[stripe-webhook] Error updating payment failed status:', updateError);
+          await alertWebhookFailure(event.type, profile.id, updateError as Error);
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
+
+        // Alert on payment failure
+        const failureReason = (invoice as any).last_payment_error?.message || 'Unknown reason';
+        await alertPaymentFailure(profile.id, invoice.amount_due, failureReason);
+
+        // Track payment failure
+        await trackPaymentFailure(profile.id, failureReason, invoice.amount_due);
 
         console.log('[stripe-webhook] Updated payment failed status for user:', profile.id);
         break;

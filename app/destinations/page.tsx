@@ -65,6 +65,7 @@ export default function DestinationsPage() {
               Activities_Tours: (dbTrip.activities_tours || 0) / 100,
               Meals_Cost: (dbTrip.meals_cost || 0) / 100,
               Insurance_Cost: (dbTrip.insurance_cost || 0) / 100,
+              Cruise_Cost: (dbTrip.cruise_cost || 0) / 100,
               Other_Costs: (dbTrip.other_costs || 0) / 100,
               Trip_Total_Cost:
                 ((dbTrip.flight_cost || 0) +
@@ -73,6 +74,7 @@ export default function DestinationsPage() {
                 (dbTrip.activities_tours || 0) +
                 (dbTrip.meals_cost || 0) +
                 (dbTrip.insurance_cost || 0) +
+                (dbTrip.cruise_cost || 0) +
                 (dbTrip.other_costs || 0)) / 100,
               Cost_Per_Traveler: dbTrip.total_travelers > 0
                 ? ((dbTrip.flight_cost || 0) +
@@ -81,12 +83,19 @@ export default function DestinationsPage() {
                    (dbTrip.activities_tours || 0) +
                    (dbTrip.meals_cost || 0) +
                    (dbTrip.insurance_cost || 0) +
+                   (dbTrip.cruise_cost || 0) +
                    (dbTrip.other_costs || 0)) / 100 / dbTrip.total_travelers
                 : 0,
               Commission_Type: dbTrip.commission_rate ? 'percentage' : undefined,
               Commission_Value: dbTrip.commission_rate || undefined,
               Agency_Revenue: (dbTrip.commission_amount || 0) / 100,
               Notes: dbTrip.notes || '',
+              Flight_Vendor: dbTrip.flight_vendor,
+              Hotel_Vendor: dbTrip.hotel_vendor,
+              Ground_Transport_Vendor: dbTrip.ground_transport_vendor,
+              Activities_Vendor: dbTrip.activities_vendor,
+              Cruise_Operator: dbTrip.cruise_operator,
+              Insurance_Vendor: dbTrip.insurance_vendor,
             }));
             setTrips(tripsData);
           }

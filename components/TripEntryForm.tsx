@@ -15,7 +15,7 @@ interface TripEntryFormProps {
 
 export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
   const { currentTier } = useTier();
-  const existingTrips = DataStore.getTrips();
+  const [existingTrips, setExistingTrips] = useState<Trip[]>([]);
   const tripLimitCheck = canPerformAction(currentTier, 'add_trip', existingTrips.length);
 
   // Get unique vendor lists from existing trips
@@ -31,6 +31,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
   const hotelVendors = getUniqueVendors('Hotel_Vendor');
   const groundTransportVendors = getUniqueVendors('Ground_Transport_Vendor');
   const activitiesVendors = getUniqueVendors('Activities_Vendor');
+  const cruiseOperators = getUniqueVendors('Cruise_Operator');
   const insuranceVendors = getUniqueVendors('Insurance_Vendor');
 
   // Load available tags for Premium users
@@ -41,6 +42,11 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
     agencies: string[];
     cities: string[];
   }>({ clientNames: [], agencies: [], cities: [] });
+
+  // Load existing trips from localStorage after mount (client-side only)
+  useEffect(() => {
+    setExistingTrips(DataStore.getTrips());
+  }, []);
 
   useEffect(() => {
     if (currentTier === 'premium') {
@@ -104,6 +110,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
     Activities_Tours: '',
     Meals_Cost: '',
     Insurance_Cost: '',
+    Cruise_Cost: '',
     Other_Costs: '',
     Commission_Type: 'percentage' as 'percentage' | 'flat_fee',
     Commission_Value: '15',
@@ -112,6 +119,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
     Hotel_Vendor: '',
     Ground_Transport_Vendor: '',
     Activities_Vendor: '',
+    Cruise_Operator: '',
     Insurance_Vendor: '',
     Client_ID: '',
     Client_Type: 'individual' as 'individual' | 'corporate' | 'group',
@@ -261,6 +269,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
     const activitiesTours = parseFloat(formData.Activities_Tours as string) || 0;
     const mealsCost = parseFloat(formData.Meals_Cost as string) || 0;
     const insuranceCost = parseFloat(formData.Insurance_Cost as string) || 0;
+    const cruiseCost = parseFloat(formData.Cruise_Cost as string) || 0;
     const otherCosts = parseFloat(formData.Other_Costs as string) || 0;
 
     const totalTravelers = adults + children;
@@ -271,6 +280,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       activitiesTours +
       mealsCost +
       insuranceCost +
+      cruiseCost +
       otherCosts;
 
     // Calculate agency revenue based on commission type
@@ -299,6 +309,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       Activities_Tours: activitiesTours,
       Meals_Cost: mealsCost,
       Insurance_Cost: insuranceCost,
+      Cruise_Cost: cruiseCost,
       Other_Costs: otherCosts,
       Trip_Total_Cost: tripTotalCost,
       Cost_Per_Traveler: tripTotalCost / totalTravelers,
@@ -310,6 +321,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       Hotel_Vendor: formData.Hotel_Vendor || undefined,
       Ground_Transport_Vendor: formData.Ground_Transport_Vendor || undefined,
       Activities_Vendor: formData.Activities_Vendor || undefined,
+      Cruise_Operator: formData.Cruise_Operator || undefined,
       Insurance_Vendor: formData.Insurance_Vendor || undefined,
       Client_ID: formData.Client_ID || undefined,
       Tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -335,6 +347,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       Activities_Tours: '',
       Meals_Cost: '',
       Insurance_Cost: '',
+      Cruise_Cost: '',
       Other_Costs: '',
       Commission_Type: 'percentage',
       Commission_Value: '15',
@@ -343,6 +356,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
       Hotel_Vendor: '',
       Ground_Transport_Vendor: '',
       Activities_Vendor: '',
+      Cruise_Operator: '',
       Insurance_Vendor: '',
       Client_ID: '',
       Client_Type: 'individual',
@@ -361,6 +375,7 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
     (parseFloat(formData.Activities_Tours as string) || 0) +
     (parseFloat(formData.Meals_Cost as string) || 0) +
     (parseFloat(formData.Insurance_Cost as string) || 0) +
+    (parseFloat(formData.Cruise_Cost as string) || 0) +
     (parseFloat(formData.Other_Costs as string) || 0);
 
   return (
@@ -794,6 +809,22 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cruise Cost ($)
+            </label>
+            <input
+              type="number"
+              name="Cruise_Cost"
+              value={formData.Cruise_Cost}
+              onChange={handleChange}
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Other Costs ($)
             </label>
             <input
@@ -909,6 +940,26 @@ export default function TripEntryForm({ onSuccess }: TripEntryFormProps) {
             />
             <datalist id="activities-vendor-list">
               {activitiesVendors.map(vendor => (
+                <option key={vendor} value={vendor} />
+              ))}
+            </datalist>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cruise Operator
+            </label>
+            <input
+              type="text"
+              name="Cruise_Operator"
+              list="cruise-operator-list"
+              value={formData.Cruise_Operator}
+              onChange={handleChange}
+              placeholder="e.g., Royal Caribbean, Carnival, Norwegian"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+            <datalist id="cruise-operator-list">
+              {cruiseOperators.map(vendor => (
                 <option key={vendor} value={vendor} />
               ))}
             </datalist>

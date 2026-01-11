@@ -15,6 +15,7 @@ export interface Trip {
   Activities_Tours: number;
   Meals_Cost: number;
   Insurance_Cost: number;
+  Cruise_Cost: number;
   Other_Costs: number;
   Trip_Total_Cost: number;
   Cost_Per_Traveler: number;
@@ -28,6 +29,7 @@ export interface Trip {
   Ground_Transport_Vendor?: string;
   Activities_Vendor?: string;
   Insurance_Vendor?: string;
+  Cruise_Operator?: string;
   // Client Organization fields (Premium feature)
   Client_ID?: string; // Unique identifier for the client
   Tags?: string[]; // Custom tags for organizing trips
@@ -63,6 +65,7 @@ export const trips: Trip[] = [
     Activities_Tours: 3400,
     Meals_Cost: 900,
     Insurance_Cost: 400,
+    Cruise_Cost: 0,
     Other_Costs: 200,
     Trip_Total_Cost: 18500,
     Cost_Per_Traveler: 4625,
@@ -74,7 +77,8 @@ export const trips: Trip[] = [
     Hotel_Vendor: "Rome Cavalieri",
     Ground_Transport_Vendor: "Rome Transport Services",
     Activities_Vendor: "Colosseum Tours Inc",
-    Insurance_Vendor: "Travel Guard"
+    Insurance_Vendor: "Travel Guard",
+    Cruise_Operator: undefined
   },
   {
     Trip_ID: "T002",
@@ -93,6 +97,7 @@ export const trips: Trip[] = [
     Activities_Tours: 1800,
     Meals_Cost: 1200,
     Insurance_Cost: 300,
+    Cruise_Cost: 0,
     Other_Costs: 100,
     Trip_Total_Cost: 13300,
     Cost_Per_Traveler: 6650,
@@ -123,6 +128,7 @@ export const trips: Trip[] = [
     Activities_Tours: 2800,
     Meals_Cost: 1500,
     Insurance_Cost: 450,
+    Cruise_Cost: 0,
     Other_Costs: 250,
     Trip_Total_Cost: 18400,
     Cost_Per_Traveler: 9200,
@@ -153,6 +159,7 @@ export const trips: Trip[] = [
     Activities_Tours: 2400,
     Meals_Cost: 1100,
     Insurance_Cost: 350,
+    Cruise_Cost: 0,
     Other_Costs: 150,
     Trip_Total_Cost: 14600,
     Cost_Per_Traveler: 3650,
@@ -183,6 +190,7 @@ export const trips: Trip[] = [
     Activities_Tours: 2200,
     Meals_Cost: 950,
     Insurance_Cost: 320,
+    Cruise_Cost: 0,
     Other_Costs: 130,
     Trip_Total_Cost: 13300,
     Cost_Per_Traveler: 6650,
@@ -213,6 +221,7 @@ export const trips: Trip[] = [
     Activities_Tours: 3800,
     Meals_Cost: 1600,
     Insurance_Cost: 480,
+    Cruise_Cost: 0,
     Other_Costs: 220,
     Trip_Total_Cost: 21600,
     Cost_Per_Traveler: 5400,
@@ -243,6 +252,7 @@ export const trips: Trip[] = [
     Activities_Tours: 3200,
     Meals_Cost: 800,
     Insurance_Cost: 380,
+    Cruise_Cost: 0,
     Other_Costs: 320,
     Trip_Total_Cost: 13600,
     Cost_Per_Traveler: 4533,
@@ -273,6 +283,7 @@ export const trips: Trip[] = [
     Activities_Tours: 1600,
     Meals_Cost: 900,
     Insurance_Cost: 280,
+    Cruise_Cost: 0,
     Other_Costs: 120,
     Trip_Total_Cost: 11650,
     Cost_Per_Traveler: 5825,

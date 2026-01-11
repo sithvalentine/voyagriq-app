@@ -18,12 +18,20 @@ export interface ParsedTrip {
   activities_tours: number; // in cents
   meals_cost: number; // in cents
   insurance_cost: number; // in cents
+  cruise_cost?: number; // in cents - optional
   other_costs: number; // in cents
   currency?: string;
   commission_rate?: number;
   commission_amount?: number; // in cents
   client_id?: string;
   client_type?: 'individual' | 'corporate' | 'group';
+  // Vendor fields
+  flight_vendor?: string;
+  hotel_vendor?: string;
+  ground_transport_vendor?: string;
+  activities_vendor?: string;
+  cruise_operator?: string;
+  insurance_vendor?: string;
 }
 
 export interface ParseError {
@@ -209,12 +217,20 @@ function validateTrip(row: any, rowIndex: number): { trip: ParsedTrip | null; er
     activities_tours: dollarsToCents(row.Activities_Tours),
     meals_cost: dollarsToCents(row.Meals_Cost),
     insurance_cost: dollarsToCents(row.Insurance_Cost),
+    cruise_cost: row.Cruise_Cost ? dollarsToCents(row.Cruise_Cost) : undefined,
     other_costs: dollarsToCents(row.Other_Costs),
     currency: row.Currency ? String(row.Currency).trim() : 'USD',
     commission_rate: row.Commission_Rate ? parseFloat(String(row.Commission_Rate)) : undefined,
     commission_amount: row.Commission_Amount ? dollarsToCents(row.Commission_Amount) : undefined,
     client_id: row.Client_ID ? String(row.Client_ID).trim() : undefined,
     client_type: row.Client_Type ? String(row.Client_Type).toLowerCase() as any : undefined,
+    // Vendor fields - all optional
+    flight_vendor: row.Flight_Vendor ? String(row.Flight_Vendor).trim() : undefined,
+    hotel_vendor: row.Hotel_Vendor ? String(row.Hotel_Vendor).trim() : undefined,
+    ground_transport_vendor: row.Ground_Transport_Vendor ? String(row.Ground_Transport_Vendor).trim() : undefined,
+    activities_vendor: row.Activities_Vendor ? String(row.Activities_Vendor).trim() : undefined,
+    cruise_operator: row.Cruise_Operator ? String(row.Cruise_Operator).trim() : undefined,
+    insurance_vendor: row.Insurance_Vendor ? String(row.Insurance_Vendor).trim() : undefined,
   };
 
   return { trip, errors: [] };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
 
@@ -12,7 +12,8 @@ function RegisterContent() {
   const selectedTier = tierParam || 'starter';
 
   // Make billingInterval stateful so users can toggle it
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(intervalParam || 'monthly');
+  // Use 'monthly' as default to match server render, then update from URL if needed
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('monthly');
 
   const tierInfo = SUBSCRIPTION_TIERS[selectedTier];
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,13 @@ function RegisterContent() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Sync billing interval from URL after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (intervalParam) {
+      setBillingInterval(intervalParam);
+    }
+  }, [intervalParam]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;

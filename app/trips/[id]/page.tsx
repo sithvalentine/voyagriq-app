@@ -87,16 +87,22 @@ export default function TripDetail() {
             Activities_Tours: (dbTrip.activities_tours || 0) / 100,
             Meals_Cost: (dbTrip.meals_cost || 0) / 100,
             Insurance_Cost: (dbTrip.insurance_cost || 0) / 100,
+            Cruise_Cost: (dbTrip.cruise_cost || 0) / 100,
             Other_Costs: (dbTrip.other_costs || 0) / 100,
             Trip_Total_Cost: tripTotalCost,
             Cost_Per_Traveler: tripTotalCost / totalTravelers,
-            Currency: dbTrip.currency || 'USD',
             Commission_Type: dbTrip.commission_rate ? 'percentage' : undefined,
             Commission_Value: dbTrip.commission_rate || undefined,
             Agency_Revenue: (dbTrip.commission_amount || 0) / 100,
+            Notes: '',
+            Flight_Vendor: dbTrip.flight_vendor,
+            Hotel_Vendor: dbTrip.hotel_vendor,
+            Ground_Transport_Vendor: dbTrip.ground_transport_vendor,
+            Activities_Vendor: dbTrip.activities_vendor,
+            Cruise_Operator: dbTrip.cruise_operator,
+            Insurance_Vendor: dbTrip.insurance_vendor,
             Client_ID: dbTrip.client_id || '',
             Client_Type: dbTrip.client_type || 'individual',
-            Notes: '',
           };
         });
 
@@ -963,6 +969,7 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
     Activities_Tours: trip.Activities_Tours.toString(),
     Meals_Cost: trip.Meals_Cost.toString(),
     Insurance_Cost: trip.Insurance_Cost.toString(),
+    Cruise_Cost: trip.Cruise_Cost.toString(),
     Other_Costs: trip.Other_Costs.toString(),
     Commission_Type: (trip.Commission_Type || 'percentage') as 'percentage' | 'flat_fee',
     Commission_Value: (trip.Commission_Value || 15).toString(),
@@ -971,6 +978,7 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
     Hotel_Vendor: trip.Hotel_Vendor || '',
     Ground_Transport_Vendor: trip.Ground_Transport_Vendor || '',
     Activities_Vendor: trip.Activities_Vendor || '',
+    Cruise_Operator: trip.Cruise_Operator || '',
     Insurance_Vendor: trip.Insurance_Vendor || '',
   });
 
@@ -1030,10 +1038,11 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
     const activitiesTours = parseFloat(formData.Activities_Tours) || 0;
     const mealsCost = parseFloat(formData.Meals_Cost) || 0;
     const insuranceCost = parseFloat(formData.Insurance_Cost) || 0;
+    const cruiseCost = parseFloat(formData.Cruise_Cost) || 0;
     const otherCosts = parseFloat(formData.Other_Costs) || 0;
 
     const totalTravelers = adults + children;
-    const tripTotalCost = flightCost + hotelCost + groundTransport + activitiesTours + mealsCost + insuranceCost + otherCosts;
+    const tripTotalCost = flightCost + hotelCost + groundTransport + activitiesTours + mealsCost + insuranceCost + cruiseCost + otherCosts;
 
     const commissionValue = parseFloat(formData.Commission_Value) || 0;
     let agencyRevenue = 0;
@@ -1060,6 +1069,7 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
       Activities_Tours: activitiesTours,
       Meals_Cost: mealsCost,
       Insurance_Cost: insuranceCost,
+      Cruise_Cost: cruiseCost,
       Other_Costs: otherCosts,
       Trip_Total_Cost: tripTotalCost,
       Cost_Per_Traveler: tripTotalCost / totalTravelers,
@@ -1071,6 +1081,7 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
       Hotel_Vendor: formData.Hotel_Vendor || undefined,
       Ground_Transport_Vendor: formData.Ground_Transport_Vendor || undefined,
       Activities_Vendor: formData.Activities_Vendor || undefined,
+      Cruise_Operator: formData.Cruise_Operator || undefined,
       Insurance_Vendor: formData.Insurance_Vendor || undefined,
     };
 
@@ -1085,6 +1096,7 @@ function TripEditForm({ trip, onSave, onCancel }: TripEditFormProps) {
     (parseFloat(formData.Activities_Tours) || 0) +
     (parseFloat(formData.Meals_Cost) || 0) +
     (parseFloat(formData.Insurance_Cost) || 0) +
+    (parseFloat(formData.Cruise_Cost) || 0) +
     (parseFloat(formData.Other_Costs) || 0);
 
   return (

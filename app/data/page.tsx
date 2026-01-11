@@ -101,8 +101,8 @@ export default function DataManagement() {
   };
 
   const handleDownloadTemplate = () => {
-    const template = `Trip_ID,Client_Name,Travel_Agency,Start_Date,End_Date,Destination_Country,Destination_City,Adults,Children,Total_Travelers,Flight_Cost,Hotel_Cost,Ground_Transport,Activities_Tours,Meals_Cost,Insurance_Cost,Other_Costs,Notes,Flight_Vendor,Hotel_Vendor,Ground_Transport_Vendor,Activities_Vendor,Insurance_Vendor
-T001,Smith Family,Wanderlust Travel,2025-01-15,2025-01-22,Italy,Rome,3,1,4,7000,5400,1200,3400,900,400,200,8-day cultural immersion trip,Delta Airlines,Rome Cavalieri,Rome Transport Services,Colosseum Tours Inc,Travel Guard`;
+    const template = `Trip_ID,Client_Name,Travel_Agency,Start_Date,End_Date,Destination_Country,Destination_City,Adults,Children,Total_Travelers,Flight_Cost,Hotel_Cost,Ground_Transport,Activities_Tours,Meals_Cost,Insurance_Cost,Cruise_Cost,Other_Costs,Notes,Flight_Vendor,Hotel_Vendor,Ground_Transport_Vendor,Activities_Vendor,Insurance_Vendor,Cruise_Operator
+T001,Smith Family,Wanderlust Travel,2025-01-15,2025-01-22,Italy,Rome,3,1,4,7000,5400,1200,3400,900,400,0,200,8-day cultural immersion trip,Delta Airlines,Rome Cavalieri,Rome Transport Services,Colosseum Tours Inc,Travel Guard,`;
 
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -415,7 +415,7 @@ T001,Smith Family,Wanderlust Travel,2025-01-15,2025-01-22,Italy,Rome,3,1,4,7000,
                         ${trip.Trip_Total_Cost.toLocaleString()}
                       </td>
                       <td className="px-2 py-2 text-right font-semibold text-primary-600">
-                        ${trip.Cost_Per_Traveler.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${(trip.Cost_Per_Traveler || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-2 py-2 text-right">
                         <div className="font-bold text-green-700">

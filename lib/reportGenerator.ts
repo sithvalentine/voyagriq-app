@@ -94,6 +94,7 @@ export interface TripCostAnalysis {
     activities: number;
     meals: number;
     insurance: number;
+    cruise: number;
     other: number;
   };
   trends: Array<{
@@ -540,6 +541,7 @@ export class ReportGenerator {
     const totalActivities = this.trips.reduce((sum, t) => sum + t.Activities_Tours, 0);
     const totalMeals = this.trips.reduce((sum, t) => sum + t.Meals_Cost, 0);
     const totalInsurance = this.trips.reduce((sum, t) => sum + t.Insurance_Cost, 0);
+    const totalCruise = this.trips.reduce((sum, t) => sum + t.Cruise_Cost, 0);
     const totalOther = this.trips.reduce((sum, t) => sum + t.Other_Costs, 0);
 
     const costBreakdown = {
@@ -549,6 +551,7 @@ export class ReportGenerator {
       activities: totalActivities,
       meals: totalMeals,
       insurance: totalInsurance,
+      cruise: totalCruise,
       other: totalOther,
     };
 

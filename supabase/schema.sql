@@ -54,10 +54,11 @@ CREATE TABLE public.trips (
   activities_tours INTEGER DEFAULT 0,
   meals_cost INTEGER DEFAULT 0,
   insurance_cost INTEGER DEFAULT 0,
+  cruise_cost INTEGER DEFAULT 0,
   other_costs INTEGER DEFAULT 0,
   trip_total_cost INTEGER GENERATED ALWAYS AS (
     flight_cost + hotel_cost + ground_transport +
-    activities_tours + meals_cost + insurance_cost + other_costs
+    activities_tours + meals_cost + insurance_cost + cruise_cost + other_costs
   ) STORED,
 
   -- Currency
@@ -66,6 +67,14 @@ CREATE TABLE public.trips (
   -- Commission tracking
   commission_rate DECIMAL(5,2),
   commission_amount INTEGER,
+
+  -- Vendor/Supplier tracking fields
+  flight_vendor TEXT,
+  hotel_vendor TEXT,
+  ground_transport_vendor TEXT,
+  activities_vendor TEXT,
+  cruise_operator TEXT,
+  insurance_vendor TEXT,
 
   -- Premium Features
   client_id TEXT, -- For organizing multiple trips per client

@@ -9,6 +9,18 @@ export async function middleware(req: NextRequest) {
     },
   });
 
+  // LOCALHOST BYPASS: Skip all subscription checks on localhost for dev testing
+  // This allows devs to test features without Stripe setup
+  const isLocalhost = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
+  if (isLocalhost && process.env.NODE_ENV === 'development') {
+    return response;
+  }
+
+  // Skip if Supabase credentials not configured (dev mode without env vars)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

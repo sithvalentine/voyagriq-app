@@ -59,6 +59,7 @@ export default function VendorsPage() {
         { vendor: trip.Hotel_Vendor, category: 'Hotel', cost: trip.Hotel_Cost },
         { vendor: trip.Ground_Transport_Vendor, category: 'Ground Transport', cost: trip.Ground_Transport },
         { vendor: trip.Activities_Vendor, category: 'Activities', cost: trip.Activities_Tours },
+        { vendor: trip.Cruise_Operator, category: 'Cruise', cost: trip.Cruise_Cost },
         { vendor: trip.Insurance_Vendor, category: 'Insurance', cost: trip.Insurance_Cost },
       ];
 
@@ -313,6 +314,7 @@ export default function VendorsPage() {
               <option value="Hotel">Hotel</option>
               <option value="Ground Transport">Ground Transport</option>
               <option value="Activities">Activities</option>
+              <option value="Cruise">Cruise</option>
               <option value="Insurance">Insurance</option>
             </select>
           </div>
