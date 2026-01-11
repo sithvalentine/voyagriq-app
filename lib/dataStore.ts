@@ -101,7 +101,7 @@ export class DataStore {
       });
 
       // Only fail on critical errors, ignore warnings about field counts
-      const criticalErrors = parsed.errors.filter(e => e.type !== 'FieldMismatch');
+      const criticalErrors = parsed.errors.filter((e: any) => e.type !== 'FieldMismatch');
       if (criticalErrors && criticalErrors.length > 0) {
         return { success: false, message: `CSV parsing error: ${criticalErrors[0].message}` };
       }
