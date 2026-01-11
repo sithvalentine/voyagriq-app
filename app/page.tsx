@@ -40,7 +40,7 @@ export default function LandingPage() {
             so you can spot your most profitable trips, best suppliers, and hidden leaks in minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/pricing">
+            <Link href="/register">
               <button className="px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg cursor-pointer">
                 Start 14-Day Free Trial
               </button>
@@ -68,7 +68,7 @@ export default function LandingPage() {
             Start simple and upgrade as your trips and team grow. No setup fees, no long-term contracts.
           </p>
           <p className="text-lg text-center text-yellow-300 font-semibold mb-12">
-            💰 Save big with annual billing: Pay for 12 months, get 14 months!
+            Save big with annual billing: Pay for 12 months, get 14 months!
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -109,7 +109,7 @@ export default function LandingPage() {
                   <span>Email support</span>
                 </li>
               </ul>
-              <Link href="/register?tier=starter">
+              <Link href="/register?tier=starter&interval=monthly">
                 <button className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors cursor-pointer">
                   Start Free Trial
                 </button>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                   <span>Priority support</span>
                 </li>
               </ul>
-              <Link href="/register?tier=standard">
+              <Link href="/register?tier=standard&interval=monthly">
                 <button className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-colors cursor-pointer">
                   Start Free Trial
                 </button>
@@ -216,7 +216,7 @@ export default function LandingPage() {
                   <span>Quarterly check-ins</span>
                 </li>
               </ul>
-              <Link href="/register?tier=premium">
+              <Link href="/register?tier=premium&interval=monthly">
                 <button className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-pink-500 text-white rounded-lg font-bold hover:opacity-90 transition-opacity cursor-pointer">
                   Get Started
                 </button>
@@ -452,9 +452,9 @@ export default function LandingPage() {
             Join travel advisors who are using data to price better, negotiate smarter, and grow with confidence.
             Choose the plan that fits your agency.
           </p>
-          <Link href="/pricing">
+          <Link href="/register">
             <button className="px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg cursor-pointer">
-              View Pricing & Get Started
+              Start Your Free Trial
             </button>
           </Link>
           <p className="text-sm text-gray-400 mt-4">

@@ -10,7 +10,10 @@ function RegisterContent() {
   const tierParam = searchParams.get('tier') as SubscriptionTier | null;
   const intervalParam = searchParams.get('interval') as 'monthly' | 'annual' | null;
   const selectedTier = tierParam || 'starter';
-  const billingInterval = intervalParam || 'monthly';
+
+  // Make billingInterval stateful so users can toggle it
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(intervalParam || 'monthly');
+
   const tierInfo = SUBSCRIPTION_TIERS[selectedTier];
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -178,6 +181,38 @@ function RegisterContent() {
           </p>
         </div>
 
+        {/* Billing Interval Toggle */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <span className="text-sm text-gray-600 font-medium">Billing:</span>
+          <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-md border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setBillingInterval('monthly')}
+              className={`px-6 py-2 rounded-md font-semibold text-sm transition-all ${
+                billingInterval === 'monthly'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval('annual')}
+              className={`px-6 py-2 rounded-md font-semibold text-sm transition-all ${
+                billingInterval === 'annual'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-transparent text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Annual
+              <span className="ml-1 text-xs font-normal">
+                (Save 17%)
+              </span>
+            </button>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Selected Plan Banner */}
           <div className={`p-6 ${
@@ -195,12 +230,12 @@ function RegisterContent() {
                 </p>
                 {selectedTier !== 'premium' && billingInterval === 'monthly' && (
                   <p className="text-white/90 text-sm mt-1 font-semibold">
-                    ✨ Includes 14-day free trial
+                    Includes 14-day free trial
                   </p>
                 )}
                 {billingInterval === 'annual' && (
                   <p className="text-white/90 text-sm mt-1 font-semibold">
-                    🎉 Get 2 months free with annual billing!
+                    Get 2 months free with annual billing!
                   </p>
                 )}
               </div>
@@ -502,7 +537,7 @@ function RegisterContent() {
 
         {/* Trust Indicators */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          <p>🔒 Your data is secure and encrypted</p>
+          <p>Your data is secure and encrypted</p>
           <p className="mt-2">Cancel anytime • No long-term contracts • 30-day money-back guarantee</p>
           <div className="mt-4 flex justify-center gap-4">
             <Link href="/terms" className="text-gray-500 hover:text-gray-700">
