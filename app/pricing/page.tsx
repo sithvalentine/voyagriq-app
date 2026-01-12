@@ -328,7 +328,7 @@ export default function PricingPage() {
               </ul>
 
               <a
-                href="mailto:sales@voyagriq.com?subject=Enterprise%20Plan%20Inquiry"
+                href="mailto:james@voyagriq.com?subject=Enterprise%20Plan%20Inquiry"
                 className="block w-full py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors text-center"
               >
                 Contact Sales
