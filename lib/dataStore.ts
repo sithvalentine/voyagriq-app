@@ -247,4 +247,43 @@ export class DataStore {
 
     return [headers.join(','), ...rows].join('\n');
   }
+
+  // Data retention methods
+  static applyDataRetention(tier: import('./subscription').SubscriptionTier): void {
+    const { applyArchiving } = require('./dataRetention');
+    const trips = this.getTrips();
+    const updatedTrips = applyArchiving(trips, tier);
+
+    // Only save if there were changes
+    const hasChanges = updatedTrips.some((trip: Trip, index: number) => trip.archived !== trips[index]?.archived);
+    if (hasChanges) {
+      this.setTrips(updatedTrips);
+    }
+  }
+
+  static restoreArchivedTrips(newTier: import('./subscription').SubscriptionTier): void {
+    const { restoreTripsForTier } = require('./dataRetention');
+    const trips = this.getTrips();
+    const restoredTrips = restoreTripsForTier(trips, newTier);
+    this.setTrips(restoredTrips);
+  }
+
+  static markTripWarningShown(tripId: string): void {
+    const trips = this.getTrips();
+    const index = trips.findIndex(t => t.Trip_ID === tripId);
+    if (index !== -1) {
+      trips[index].archiveWarningShown = true;
+      this.setTrips(trips);
+    }
+  }
+
+  static getActiveTrips(): Trip[] {
+    const { getActiveTrips } = require('./dataRetention');
+    return getActiveTrips(this.getTrips());
+  }
+
+  static getArchivedTrips(): Trip[] {
+    const { getArchivedTrips } = require('./dataRetention');
+    return getArchivedTrips(this.getTrips());
+  }
 }

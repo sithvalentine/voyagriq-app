@@ -35,6 +35,10 @@ export interface Trip {
   Tags?: string[]; // Custom tags for organizing trips
   Client_Type?: 'individual' | 'corporate' | 'group'; // Type of client
   Custom_Fields?: Record<string, any>; // Flexible custom data
+  // Data retention fields
+  archived?: boolean; // Whether this trip is archived due to retention policy
+  archivedAt?: string; // ISO date when trip was archived
+  archiveWarningShown?: boolean; // Whether user has been warned about upcoming archiving
 }
 
 export interface Service {

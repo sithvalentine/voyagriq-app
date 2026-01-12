@@ -11,6 +11,7 @@ import { formatCurrencyWithSymbol } from '@/lib/currency';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
 import BulkImportModal from '@/components/BulkImportModal';
 import QuickAddTripForm from '@/components/QuickAddTripForm';
+import { DataRetentionWarning, DataRetentionSummary } from '@/components/DataRetentionWarning';
 import * as XLSX from 'xlsx';
 import { EnhancedReportGenerator, WhiteLabelConfig } from '@/lib/enhancedReportGenerator';
 
@@ -106,7 +107,12 @@ export default function TripsOverview() {
         });
 
         console.log(`[Trips] Loaded ${convertedTrips.length} trips from database`);
-        setTrips(convertedTrips);
+
+        // Apply data retention archiving based on current tier
+        const { applyArchiving } = await import('@/lib/dataRetention');
+        const tripsWithArchiving = applyArchiving(convertedTrips, currentTier);
+
+        setTrips(tripsWithArchiving);
         setIsLoading(false);
       } catch (error) {
         console.error('[Trips] Error in loadTrips:', error);
@@ -117,7 +123,7 @@ export default function TripsOverview() {
     };
 
     loadTrips();
-  }, []);
+  }, [currentTier]);
 
   // Debug: Track modal state changes
   useEffect(() => {
@@ -161,7 +167,11 @@ export default function TripsOverview() {
 
   // Apply filters
   const filteredTrips = useMemo(() => {
-    let filtered = filterTrips(trips, {
+    // First, filter out archived trips (don't show in main view)
+    let filtered = trips.filter(trip => !trip.archived);
+
+    // Then apply regular filters
+    filtered = filterTrips(filtered, {
       agencies: selectedAgencies.length > 0 ? selectedAgencies : undefined,
       countries: selectedCountries.length > 0 ? selectedCountries : undefined,
     });
@@ -804,6 +814,10 @@ export default function TripsOverview() {
           onCancel={() => setShowQuickAdd(false)}
         />
       )}
+
+      {/* Data Retention Warnings */}
+      <DataRetentionWarning trips={trips} />
+      <DataRetentionSummary trips={trips} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

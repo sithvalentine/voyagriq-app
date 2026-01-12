@@ -193,7 +193,32 @@ export default function PrivacyPolicy() {
                 Upon request, we will delete your personal information, except where retention is required by law.
               </p>
 
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.4 Marketing Communications</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.4 Data Retention</h3>
+              <p className="text-gray-700 mb-4">
+                We retain your trip data based on your subscription tier:
+              </p>
+              <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
+                <li><strong>Starter:</strong> 6 months</li>
+                <li><strong>Standard:</strong> 2 years</li>
+                <li><strong>Premium:</strong> 5 years</li>
+                <li><strong>Enterprise:</strong> Unlimited</li>
+              </ul>
+              <p className="text-gray-700 mb-4">
+                After the retention period:
+              </p>
+              <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
+                <li>Trip data is archived (hidden from dashboard) but not permanently deleted</li>
+                <li>You receive 30-day advance warning notifications before archiving</li>
+                <li>You can download your data before archiving</li>
+                <li>Upgrading to a higher tier automatically restores archived data</li>
+                <li>Archived data is permanently deleted after twice the retention period OR upon your request</li>
+              </ul>
+              <p className="text-gray-700 mb-4">
+                We retain account information (email, billing data) as long as your account is active or as needed to provide services.
+                After account deletion, personal information is permanently deleted within 30 days, except where retention is required by law.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.5 Marketing Communications</h3>
               <p className="text-gray-700 mb-4">
                 You can opt out of marketing emails by:
               </p>

@@ -69,12 +69,13 @@ export default function TermsOfService() {
 
               <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.2 Subscription Tiers</h3>
               <p className="text-gray-700 mb-4">
-                We offer three subscription tiers with both monthly and annual billing options:
+                We offer four subscription tiers with both monthly and annual billing options:
               </p>
               <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
-                <li><strong>Starter:</strong> $49/month or $588/year - Up to 25 trips per month, single user, core analytics</li>
-                <li><strong>Standard:</strong> $99/month or $1,188/year - Up to 50 trips per month, up to 10 users, business intelligence, scheduled reports</li>
-                <li><strong>Premium:</strong> $199/month or $2,388/year - Up to 100 trips per month, up to 20 team members, API access, white-label branding, priority support</li>
+                <li><strong>Starter:</strong> $49/month or $588/year - Unlimited trips, 6 months data retention, single user, core analytics</li>
+                <li><strong>Standard:</strong> $99/month or $1,188/year - Unlimited trips, 2 years data retention, up to 10 users, business intelligence, scheduled reports</li>
+                <li><strong>Premium:</strong> $199/month or $2,388/year - Unlimited trips, 5 years data retention, up to 20 team members, API access, white-label branding, priority support</li>
+                <li><strong>Enterprise:</strong> Custom pricing - Unlimited trips, unlimited data retention, unlimited team members, custom tier configuration, white-label platform, dedicated infrastructure</li>
               </ul>
 
               <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.3 Annual Billing Discount</h3>
@@ -129,6 +130,31 @@ export default function TermsOfService() {
                 <Link href="/privacy" className="text-primary-600 hover:text-primary-700 underline">
                   Privacy Policy
                 </Link>.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.1 Data Retention Policy</h3>
+              <p className="text-gray-700 mb-4">
+                Your subscription tier determines how long your trip data remains accessible in the Service:
+              </p>
+              <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
+                <li><strong>Starter:</strong> 6 months data retention</li>
+                <li><strong>Standard:</strong> 2 years data retention</li>
+                <li><strong>Premium:</strong> 5 years data retention</li>
+                <li><strong>Enterprise:</strong> Unlimited data retention</li>
+              </ul>
+              <p className="text-gray-700 mb-4">
+                <strong>How Data Retention Works:</strong>
+              </p>
+              <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
+                <li><strong>Archiving, Not Deletion:</strong> When trip data exceeds your retention period, it is archived (hidden from your dashboard) but NOT permanently deleted</li>
+                <li><strong>Warning Notifications:</strong> You will receive warning notifications 30 days before trip data is archived, giving you time to download and save your data</li>
+                <li><strong>Data Export:</strong> You can export and download all your data at any time in CSV, Excel, or PDF format</li>
+                <li><strong>Restore by Upgrading:</strong> If you upgrade to a higher tier with longer retention, previously archived data will be automatically restored and made accessible again</li>
+                <li><strong>Permanent Deletion:</strong> Archived data is permanently deleted after twice the retention period (e.g., Starter tier: archived at 6 months, deleted at 12 months) OR immediately upon your request</li>
+                <li><strong>Account Deletion:</strong> If you delete your account, all data (including archived data) is permanently deleted within 30 days</li>
+              </ul>
+              <p className="text-gray-700 mb-4">
+                We strongly recommend regularly exporting your data to maintain your own backup copies independent of the Service.
               </p>
             </section>
 
