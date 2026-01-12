@@ -491,7 +491,8 @@ export function generateTripReportPDF(
   const tierLabels: Record<SubscriptionTier, string> = {
     starter: 'Starter Plan',
     standard: 'Standard Plan',
-    premium: 'Premium Plan'
+    premium: 'Premium Plan',
+    enterprise: 'Enterprise Plan'
   };
   doc.text(tierLabels[tier], pageWidth - 14, footerY, { align: 'right' });
 
@@ -597,7 +598,8 @@ export function generateMultiTripReportPDF(
   const tierLabels: Record<SubscriptionTier, string> = {
     starter: 'Starter Plan',
     standard: 'Standard Plan',
-    premium: 'Premium Plan'
+    premium: 'Premium Plan',
+    enterprise: 'Enterprise Plan'
   };
   doc.text(tierLabels[tier], pageWidth - 14, footerY, { align: 'right' });
 

@@ -78,7 +78,7 @@ export function TierProvider({ children }: { children: ReactNode }) {
       if (testMode) {
         // In dev mode, check for saved tier in localStorage
         const savedTier = localStorage.getItem('voyagriq-dev-tier') as SubscriptionTier;
-        if (savedTier && (savedTier === 'starter' || savedTier === 'standard' || savedTier === 'premium')) {
+        if (savedTier && (savedTier === 'starter' || savedTier === 'standard' || savedTier === 'premium' || savedTier === 'enterprise')) {
           setCurrentTierState(savedTier);
         } else {
           // Default to premium if no saved tier

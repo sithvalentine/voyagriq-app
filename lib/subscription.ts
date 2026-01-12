@@ -1,17 +1,19 @@
 // Subscription Tiers and Feature Limits
 
-export type SubscriptionTier = 'starter' | 'standard' | 'premium';
+export type SubscriptionTier = 'starter' | 'standard' | 'premium' | 'enterprise';
 
 export interface TierFeatures {
   name: string;
-  price: number;
+  price: number | 'custom';
   priceLabel: string;
   tripLimit: number | 'unlimited';
-  userLimit: number;
+  dataRetention: string; // e.g., '6 months', '2 years', '5 years', 'unlimited'
+  userLimit: number | 'unlimited';
   hasTrial: boolean;
   trialDays?: number;
   features: string[];
   restrictions: string[];
+  contactForPricing?: boolean;
 }
 
 export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
@@ -19,69 +21,82 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     name: 'Starter',
     price: 49,
     priceLabel: '$49/mo',
-    tripLimit: 25,
+    tripLimit: 'unlimited',
+    dataRetention: '6 months',
     userLimit: 1,
     hasTrial: true,
     trialDays: 14,
     features: [
       '14-day free trial',
-      'Up to 25 trips per month',
+      'Unlimited trips',
+      '6 months data retention',
       'Single user account',
       'Core analytics dashboards',
       'Standard reports',
-      'Export to CSV, Excel & PDF',
-      'PDF reports with trip analytics',
+      'Export to CSV',
+      'Basic PDF reports',
       'Cost breakdown analysis',
       'Cost per traveler metrics',
       'Commission tracking',
       'Email support',
     ],
     restrictions: [
-      'Limited to 25 trips',
+      'Data retained for 6 months only',
       'Single user only',
+      'CSV export only',
+      'No bulk import',
       'No custom tags',
       'No scheduled reports',
       'No API access',
-      'No advanced BI insights',
+      'No advanced analytics',
     ],
   },
   standard: {
     name: 'Standard',
     price: 99,
     priceLabel: '$99/mo',
-    tripLimit: 50,
+    tripLimit: 'unlimited',
+    dataRetention: '2 years',
     userLimit: 10,
     hasTrial: true,
     trialDays: 14,
     features: [
       'Everything in Starter',
       '14-day free trial',
-      'Up to 50 trips per month',
+      'Unlimited trips',
+      '2 years data retention',
       'Up to 10 team members',
       'Team collaboration & role permissions',
+      'Bulk CSV/Excel import',
       'Advanced filters & search',
+      'Export to CSV, Excel & PDF',
+      'Enhanced PDF reports',
       'Scheduled reports (weekly/monthly)',
       'Custom client tags & organization',
+      'Vendor tracking',
       'Agency performance comparison',
       'Priority email support (24hr response)',
     ],
     restrictions: [
-      'Limited to 50 trips',
-      'Up to 10 users',
+      'Data retained for 2 years',
+      'Up to 10 team members',
       'No API access',
       'No white-label branding',
+      'No custom fields',
     ],
   },
   premium: {
     name: 'Premium',
     price: 199,
     priceLabel: '$199/mo',
-    tripLimit: 100,
+    tripLimit: 'unlimited',
+    dataRetention: '5 years',
     userLimit: 20,
     hasTrial: false,
     features: [
       'Everything in Standard',
-      'Up to 100 trips per month',
+      'Unlimited trips',
+      '5 years data retention',
       'Up to 20 team members',
       'White-label PDF reports with your branding',
       'Custom logo, colors & company info',
@@ -89,15 +104,43 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
       'Advanced export options',
       'Custom client tags & fields',
       'Multi-client portfolio management',
+      'Advanced analytics & insights',
       'Priority support (4-hour response)',
       'Dedicated account manager',
-      'Custom feature development available',
       'Quarterly business reviews',
     ],
     restrictions: [
-      'Limited to 100 trips',
+      'Data retained for 5 years',
       'Up to 20 team members',
     ],
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 'custom',
+    priceLabel: 'Contact Us',
+    tripLimit: 'unlimited',
+    dataRetention: 'unlimited',
+    userLimit: 'unlimited',
+    hasTrial: false,
+    contactForPricing: true,
+    features: [
+      'Everything in Premium',
+      'Unlimited trips',
+      'Unlimited data retention',
+      'Unlimited team members',
+      'Custom tier configuration',
+      'White-label platform branding',
+      'Custom feature development',
+      'Dedicated infrastructure',
+      'Advanced security & compliance',
+      'Custom integrations',
+      'SLA guarantees',
+      '24/7 priority support',
+      'Dedicated success manager',
+      'On-site training available',
+      'Custom reporting & analytics',
+    ],
+    restrictions: [],
   },
 };
 
@@ -121,6 +164,7 @@ export function canPerformAction(
       return { allowed: true };
 
     case 'add_user':
+      if (tier.userLimit === 'unlimited') return { allowed: true };
       if (currentCount !== undefined && currentCount >= tier.userLimit) {
         return {
           allowed: false,
@@ -139,10 +183,10 @@ export function canPerformAction(
       return { allowed: true };
 
     case 'use_api':
-      if (currentTier !== 'premium') {
+      if (currentTier !== 'premium' && currentTier !== 'enterprise') {
         return {
           allowed: false,
-          reason: 'API access is only available in the Premium plan.',
+          reason: 'API access is only available in Premium and Enterprise plans.',
         };
       }
       return { allowed: true };
@@ -168,6 +212,7 @@ export function getTierByName(tierName: string): SubscriptionTier {
 export function getNextTier(currentTier: SubscriptionTier): SubscriptionTier | null {
   if (currentTier === 'starter') return 'standard';
   if (currentTier === 'standard') return 'premium';
+  if (currentTier === 'premium') return 'enterprise';
   return null; // Already at highest tier
 }
 
@@ -175,8 +220,14 @@ export function getNextTier(currentTier: SubscriptionTier): SubscriptionTier | n
 export function calculateUpgradeSavings(
   currentTier: SubscriptionTier,
   targetTier: SubscriptionTier
-): number {
+): number | null {
   const currentPrice = SUBSCRIPTION_TIERS[currentTier].price;
   const targetPrice = SUBSCRIPTION_TIERS[targetTier].price;
+
+  // Can't calculate if either price is custom
+  if (currentPrice === 'custom' || targetPrice === 'custom') {
+    return null;
+  }
+
   return targetPrice - currentPrice;
 }

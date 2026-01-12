@@ -102,7 +102,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 max-w-7xl mx-auto">
           {/* Starter Tier */}
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden hover:shadow-2xl transition-shadow relative">
             {billingInterval === 'monthly' && (
@@ -119,7 +119,7 @@ export default function PricingPage() {
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.starter.name}</h2>
               <div className="flex items-baseline">
                 <span className="text-4xl font-bold">
-                  ${billingInterval === 'annual'
+                  ${billingInterval === 'annual' && typeof SUBSCRIPTION_TIERS.starter.price === 'number'
                     ? Math.round(SUBSCRIPTION_TIERS.starter.price * 12 / 14)
                     : SUBSCRIPTION_TIERS.starter.price}
                 </span>
@@ -130,10 +130,10 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {SUBSCRIPTION_TIERS.starter.tripLimit} trips
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  Unlimited trips
                 </div>
-                <div className="text-gray-600">per month</div>
+                <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.starter.dataRetention} data retention</div>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -170,7 +170,7 @@ export default function PricingPage() {
           </div>
 
           {/* Standard Tier - POPULAR */}
-          <div className="bg-white rounded-2xl shadow-2xl border-4 border-purple-500 overflow-hidden transform scale-105 relative">
+          <div className="bg-white rounded-2xl shadow-2xl border-4 border-purple-500 overflow-hidden transform lg:scale-105 relative">
             {billingInterval === 'monthly' && (
               <div className="absolute top-0 left-0 bg-blue-400 text-white px-3 py-1 text-xs font-bold rounded-br-lg">
                 14-DAY FREE TRIAL
@@ -189,7 +189,7 @@ export default function PricingPage() {
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.standard.name}</h2>
               <div className="flex items-baseline">
                 <span className="text-4xl font-bold">
-                  ${billingInterval === 'annual'
+                  ${billingInterval === 'annual' && typeof SUBSCRIPTION_TIERS.standard.price === 'number'
                     ? Math.round(SUBSCRIPTION_TIERS.standard.price * 12 / 14)
                     : SUBSCRIPTION_TIERS.standard.price}
                 </span>
@@ -200,10 +200,10 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {SUBSCRIPTION_TIERS.standard.tripLimit} trips
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  Unlimited trips
                 </div>
-                <div className="text-gray-600">per month</div>
+                <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.standard.dataRetention} data retention</div>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -250,21 +250,21 @@ export default function PricingPage() {
               <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.premium.name}</h2>
               <div className="flex items-baseline">
                 <span className="text-4xl font-bold">
-                  ${billingInterval === 'annual'
+                  ${billingInterval === 'annual' && typeof SUBSCRIPTION_TIERS.premium.price === 'number'
                     ? Math.round(SUBSCRIPTION_TIERS.premium.price * 12 / 14)
                     : SUBSCRIPTION_TIERS.premium.price}
                 </span>
                 <span className="text-amber-100">/month</span>
               </div>
-              <p className="text-amber-100 mt-2">Enterprise-ready solution</p>
+              <p className="text-amber-100 mt-2">For established agencies</p>
             </div>
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-3xl font-bold text-gray-900 mb-1">
-                  {SUBSCRIPTION_TIERS.premium.tripLimit} trips
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  Unlimited trips
                 </div>
-                <div className="text-gray-600">per month</div>
+                <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.premium.dataRetention} data retention</div>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -289,6 +289,50 @@ export default function PricingPage() {
                   {loading === 'premium' ? 'Processing...' : 'Get Started'}
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Enterprise Tier */}
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-900 overflow-hidden hover:shadow-2xl transition-shadow relative">
+            <div className="absolute top-0 right-0 bg-gray-900 text-white px-3 py-1 text-xs font-bold rounded-bl-lg">
+              CUSTOM SOLUTION
+            </div>
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-6">
+              <h2 className="text-2xl font-bold mb-2">{SUBSCRIPTION_TIERS.enterprise.name}</h2>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold">
+                  {SUBSCRIPTION_TIERS.enterprise.priceLabel}
+                </span>
+              </div>
+              <p className="text-gray-300 mt-2">Tailored for large agencies</p>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  Unlimited trips
+                </div>
+                <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.enterprise.dataRetention} data retention</div>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {SUBSCRIPTION_TIERS.enterprise.features.slice(0, 8).map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-green-500 font-bold text-lg">✓</span>
+                    <span className="text-gray-700">{feature}</span>
+                  </li>
+                ))}
+                <li className="flex items-start gap-2 text-gray-500 italic">
+                  <span>+ more custom features...</span>
+                </li>
+              </ul>
+
+              <a
+                href="mailto:sales@voyagriq.com?subject=Enterprise%20Plan%20Inquiry"
+                className="block w-full py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors text-center"
+              >
+                Contact Sales
+              </a>
             </div>
           </div>
         </div>
@@ -317,23 +361,34 @@ export default function PricingPage() {
                     )}
                   </th>
                   <th className="text-center py-4 px-4 text-amber-600 font-semibold">Premium</th>
+                  <th className="text-center py-4 px-4 text-gray-900 font-semibold">Enterprise</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">Monthly trip limit</td>
-                  <td className="py-4 px-4 text-center font-semibold text-gray-900">25</td>
-                  <td className="py-4 px-4 text-center font-semibold text-gray-900">50</td>
-                  <td className="py-4 px-4 text-center font-semibold text-gray-900">100</td>
+                  <td className="py-4 px-4 text-gray-700">Trip limit</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Data retention</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">6 months</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">2 years</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">5 years</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Team members</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">1</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">10</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">20</td>
+                  <td className="py-4 px-4 text-center font-semibold text-green-600">Unlimited</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Analytics dashboards</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
@@ -343,15 +398,18 @@ export default function PricingPage() {
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 text-gray-700">Business intelligence</td>
-                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
-                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">CSV/Excel/PDF export</td>
+                  <td className="py-4 px-4 text-gray-700">Export options</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV, Excel, PDF</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV, Excel, PDF</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">All + Custom</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Bulk import</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
@@ -361,21 +419,18 @@ export default function PricingPage() {
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Scheduled reports</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">Advanced filters & search</td>
+                  <td className="py-4 px-4 text-gray-700">Advanced analytics</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
-                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
-                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 text-gray-700">Agency performance comparison</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
@@ -385,15 +440,25 @@ export default function PricingPage() {
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 text-gray-700">White-label reports</td>
-                  <td className="py-4 px-4 text-center text-gray-400">—</td>
-                  <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">Dedicated account manager</td>
+                  <td className="py-4 px-4 text-gray-700">White-label branding</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">Platform-wide</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Dedicated support</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">24/7 + Manager</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Custom features</td>
+                  <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
@@ -430,10 +495,19 @@ export default function PricingPage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                What happens if I exceed my trip limit?
+                Are trips really unlimited?
               </h3>
               <p className="text-gray-600">
-                If you reach your monthly trip limit, you'll be prompted to upgrade to a higher tier. Your existing data remains safe and accessible, but you won't be able to add new trips until you upgrade or your monthly limit resets.
+                Yes! All tiers offer unlimited trip tracking. The main differences between tiers are data retention periods, team size limits, and access to advanced features like bulk import, API access, and white-label branding.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                What's the difference in data retention?
+              </h3>
+              <p className="text-gray-600">
+                Starter retains 6 months of data, Standard keeps 2 years, Premium stores 5 years, and Enterprise offers unlimited retention. Older data is archived but can be accessed by upgrading to a higher tier.
               </p>
             </div>
 
@@ -465,10 +539,19 @@ export default function PricingPage() {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Do trip limits reset monthly?
+                How does the Enterprise plan work?
               </h3>
               <p className="text-gray-600">
-                Yes! Your trip limit resets on your billing anniversary date each month. For example, if you signed up on the 15th, your limit resets on the 15th of each month.
+                Enterprise is a fully customizable solution for large agencies with specific needs. Contact our sales team to discuss custom pricing, feature development, dedicated infrastructure, and white-label platform branding. We'll tailor a solution that fits your organization's exact requirements.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Can I test features before upgrading?
+              </h3>
+              <p className="text-gray-600">
+                Start and Standard tiers offer a 14-day free trial on monthly plans. This gives you full access to try all features before committing. You can also upgrade anytime to access higher-tier features—upgrades are prorated so you only pay for the remaining time in your billing cycle.
               </p>
             </div>
           </div>

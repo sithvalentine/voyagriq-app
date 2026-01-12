@@ -1,6 +1,6 @@
 import { Trip } from '@/data/trips';
 
-export type SubscriptionTier = 'starter' | 'standard' | 'premium';
+export type SubscriptionTier = 'starter' | 'standard' | 'premium' | 'enterprise';
 
 // ============================================================================
 // DATA ANALYSIS INTERFACES

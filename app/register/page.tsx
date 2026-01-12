@@ -249,16 +249,16 @@ function RegisterContent() {
               </div>
               <div className="text-right">
                 <div className="text-4xl font-bold">
-                  {tierInfo.price === 0
-                    ? 'Free'
-                    : `$${billingInterval === 'annual'
+                  {tierInfo.price === 0 || tierInfo.price === 'custom'
+                    ? tierInfo.price === 0 ? 'Free' : tierInfo.priceLabel
+                    : `$${billingInterval === 'annual' && typeof tierInfo.price === 'number'
                         ? Math.round(tierInfo.price * 12 / 14)
                         : tierInfo.price}`}
                 </div>
-                {tierInfo.price > 0 && (
+                {typeof tierInfo.price === 'number' && tierInfo.price > 0 && (
                   <div className="text-white/90 text-sm">per month</div>
                 )}
-                {billingInterval === 'annual' && tierInfo.price > 0 && (
+                {billingInterval === 'annual' && typeof tierInfo.price === 'number' && tierInfo.price > 0 && (
                   <div className="text-white/70 text-xs mt-1">
                     Billed ${tierInfo.price * 12} annually
                   </div>
