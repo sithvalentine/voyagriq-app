@@ -25,6 +25,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if we're in dev mode with login bypass
+    const isLocalhost = typeof window !== 'undefined' &&
+                        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const devMode = isLocalhost &&
+                    typeof window !== 'undefined' &&
+                    localStorage.getItem('voyagriq-dev-mode') === 'true';
+    const bypassLogin = devMode && localStorage.getItem('voyagriq-bypass-login') === 'true';
+
+    if (bypassLogin) {
+      // Create a mock user and session for dev mode
+      const mockUser = {
+        id: 'dev-user-' + Date.now(),
+        email: 'dev@voyagriq.local',
+        user_metadata: { full_name: 'Dev User' },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as User;
+
+      const mockSession = {
+        access_token: 'dev-token',
+        refresh_token: 'dev-refresh-token',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockUser,
+      } as Session;
+
+      setUser(mockUser);
+      setSession(mockSession);
+      setLoading(false);
+      console.log('🔧 Dev Mode: Login bypassed - using mock user');
+      return;
+    }
+
+    // Normal authentication flow
     // Get initial session
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       setSession(data.session);
