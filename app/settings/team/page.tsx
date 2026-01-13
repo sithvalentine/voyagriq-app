@@ -369,7 +369,7 @@ export default function TeamManagement() {
         )}
       </div>
 
-      {/* Team Limits Info */}
+      {/* Team Limits Info - Only show for Standard tier */}
       {currentTier === 'standard' && (
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-bold text-gray-900 mb-3">💡 Team Size Limits</h3>
@@ -383,6 +383,7 @@ export default function TeamManagement() {
           </Link>
         </div>
       )}
+      {/* Premium users see no upgrade message - Premium is the highest tier for customers */}
     </div>
   );
 }

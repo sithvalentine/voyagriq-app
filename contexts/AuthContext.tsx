@@ -35,13 +35,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (bypassLogin) {
       // Create a mock user and session for dev mode
+      // Use a fixed ID to prevent hydration errors
       const mockUser = {
-        id: 'dev-user-' + Date.now(),
+        id: 'dev-user-12345',
         email: 'dev@voyagriq.local',
         user_metadata: { full_name: 'Dev User' },
         app_metadata: {},
         aud: 'authenticated',
-        created_at: new Date().toISOString(),
+        created_at: '2024-01-01T00:00:00.000Z',
       } as User;
 
       const mockSession = {
