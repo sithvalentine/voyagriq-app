@@ -1,32 +1,38 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Currency } from '@/lib/currency';
+import { getCurrency } from '@/lib/currencies';
 
 interface CurrencyContextType {
-  currency: Currency;
-  setCurrency: (currency: Currency) => void;
+  currency: string;
+  setCurrency: (currency: string) => void;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>('USD');
+  const [currency, setCurrencyState] = useState<string>('USD');
 
   // Load currency preference from localStorage (client-side only to avoid hydration issues)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('preferred_currency');
-      if (saved && (saved === 'USD' || saved === 'EUR' || saved === 'GBP')) {
+      // Validate that the currency exists in our system
+      if (saved && getCurrency(saved)) {
         setCurrencyState(saved);
       }
     }
   }, []);
 
   // Save currency preference to localStorage
-  const setCurrency = (newCurrency: Currency) => {
-    setCurrencyState(newCurrency);
-    localStorage.setItem('preferred_currency', newCurrency);
+  const setCurrency = (newCurrency: string) => {
+    // Validate currency before setting
+    if (getCurrency(newCurrency)) {
+      setCurrencyState(newCurrency);
+      localStorage.setItem('preferred_currency', newCurrency);
+    } else {
+      console.warn(`Invalid currency code: ${newCurrency}`);
+    }
   };
 
   return (

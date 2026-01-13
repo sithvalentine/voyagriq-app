@@ -7,7 +7,7 @@ import { Trip } from '@/data/trips';
 import { formatDateRange, filterTrips } from '@/lib/utils';
 import { useTier } from '@/contexts/TierContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { formatCurrencyWithSymbol } from '@/lib/currency';
+import { formatCurrencyWithSymbol, convertCurrency } from '@/lib/currencies';
 import TrialExpiredScreen from '@/components/TrialExpiredScreen';
 import BulkImportModal from '@/components/BulkImportModal';
 import QuickAddTripForm from '@/components/QuickAddTripForm';
@@ -325,6 +325,12 @@ export default function TripsOverview() {
   const handleExportCSV = () => {
     if (filteredTrips.length === 0) return;
 
+    // Helper function to convert and format currency
+    const formatAmount = (amount: number): string => {
+      const converted = convertCurrency(amount, 'USD', currency);
+      return formatCurrencyWithSymbol(converted, currency);
+    };
+
     // Helper function to escape CSV values (handles commas, quotes, newlines)
     const escapeCSV = (value: string | number): string => {
       const str = String(value);
@@ -355,16 +361,16 @@ export default function TripsOverview() {
       escapeCSV(trip.Adults),
       escapeCSV(trip.Children),
       escapeCSV(trip.Total_Travelers),
-      escapeCSV(formatCurrencyWithSymbol(trip.Flight_Cost, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Hotel_Cost, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Ground_Transport, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Activities_Tours, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Meals_Cost, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Insurance_Cost, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Other_Costs, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Trip_Total_Cost, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Cost_Per_Traveler, currency)),
-      escapeCSV(formatCurrencyWithSymbol(trip.Agency_Revenue || 0, currency)),
+      escapeCSV(formatAmount(trip.Flight_Cost)),
+      escapeCSV(formatAmount(trip.Hotel_Cost)),
+      escapeCSV(formatAmount(trip.Ground_Transport)),
+      escapeCSV(formatAmount(trip.Activities_Tours)),
+      escapeCSV(formatAmount(trip.Meals_Cost)),
+      escapeCSV(formatAmount(trip.Insurance_Cost)),
+      escapeCSV(formatAmount(trip.Other_Costs)),
+      escapeCSV(formatAmount(trip.Trip_Total_Cost)),
+      escapeCSV(formatAmount(trip.Cost_Per_Traveler)),
+      escapeCSV(formatAmount(trip.Agency_Revenue || 0)),
       escapeCSV(trip.Commission_Type || ''),
       escapeCSV(trip.Commission_Value || ''),
       escapeCSV(trip.Notes || ''),
@@ -390,6 +396,12 @@ export default function TripsOverview() {
   const handleExportExcel = () => {
     if (filteredTrips.length === 0) return;
 
+    // Helper function to convert and format currency
+    const formatAmount = (amount: number): string => {
+      const converted = convertCurrency(amount, 'USD', currency);
+      return formatCurrencyWithSymbol(converted, currency);
+    };
+
     // Create worksheet data with headers
     const worksheetData = [
       ['Trip_ID', 'Client_Name', 'Travel_Agency', 'Start_Date', 'End_Date',
@@ -409,16 +421,16 @@ export default function TripsOverview() {
         trip.Adults,
         trip.Children,
         trip.Total_Travelers,
-        formatCurrencyWithSymbol(trip.Flight_Cost, currency),
-        formatCurrencyWithSymbol(trip.Hotel_Cost, currency),
-        formatCurrencyWithSymbol(trip.Ground_Transport, currency),
-        formatCurrencyWithSymbol(trip.Activities_Tours, currency),
-        formatCurrencyWithSymbol(trip.Meals_Cost, currency),
-        formatCurrencyWithSymbol(trip.Insurance_Cost, currency),
-        formatCurrencyWithSymbol(trip.Other_Costs, currency),
-        formatCurrencyWithSymbol(trip.Trip_Total_Cost, currency),
-        formatCurrencyWithSymbol(trip.Cost_Per_Traveler, currency),
-        formatCurrencyWithSymbol(trip.Agency_Revenue || 0, currency),
+        formatAmount(trip.Flight_Cost),
+        formatAmount(trip.Hotel_Cost),
+        formatAmount(trip.Ground_Transport),
+        formatAmount(trip.Activities_Tours),
+        formatAmount(trip.Meals_Cost),
+        formatAmount(trip.Insurance_Cost),
+        formatAmount(trip.Other_Costs),
+        formatAmount(trip.Trip_Total_Cost),
+        formatAmount(trip.Cost_Per_Traveler),
+        formatAmount(trip.Agency_Revenue || 0),
         trip.Commission_Type || '',
         trip.Commission_Value || '',
         trip.Notes || '',

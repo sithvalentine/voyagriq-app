@@ -15,6 +15,13 @@ export default function SettingsPage() {
 
   const settingsOptions = [
     {
+      title: 'Currency',
+      description: 'Select your preferred currency for displaying costs',
+      href: '/settings/currency',
+      icon: '💱',
+      tier: 'starter', // Available for all tiers
+    },
+    {
       title: 'Team Management',
       description: 'Invite team members and manage permissions',
       href: '/settings/team',
@@ -45,11 +52,14 @@ export default function SettingsPage() {
   ];
 
   const availableSettings = settingsOptions.filter(setting => {
+    if (setting.tier === 'starter') {
+      return true; // Available for all tiers
+    }
     if (setting.tier === 'standard') {
-      return currentTier === 'standard' || currentTier === 'premium';
+      return currentTier === 'standard' || currentTier === 'premium' || currentTier === 'enterprise';
     }
     if (setting.tier === 'premium') {
-      return currentTier === 'premium';
+      return currentTier === 'premium' || currentTier === 'enterprise';
     }
     return false;
   });

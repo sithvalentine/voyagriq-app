@@ -6,8 +6,6 @@ import { usePathname } from 'next/navigation';
 import { SUBSCRIPTION_TIERS } from '@/lib/subscription';
 import { useTier } from '@/contexts/TierContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { Currency, CURRENCY_SYMBOLS } from '@/lib/currency';
 
 interface DropdownItem {
   href: string;
@@ -26,10 +24,8 @@ export default function Navigation() {
   const pathname = usePathname();
   const { currentTier, isTrialActive, daysLeftInTrial, isTrialExpired, isSignedIn, devMode } = useTier();
   const { signOut } = useAuth();
-  const { currency, setCurrency } = useCurrency();
   const tierInfo = currentTier ? SUBSCRIPTION_TIERS[currentTier] : null;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
 
@@ -201,56 +197,6 @@ export default function Navigation() {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-3">
-            {/* Currency Dropdown - Hidden on small mobile */}
-            {isSignedIn && (
-              <div
-                className="hidden sm:block relative"
-                onMouseEnter={() => setShowCurrencyDropdown(true)}
-                onMouseLeave={() => setShowCurrencyDropdown(false)}
-              >
-                <button
-                  onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-700 transition-colors"
-                  aria-label="Change currency"
-                >
-                  <span>{CURRENCY_SYMBOLS[currency]} {currency}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {/* Currency Dropdown menu */}
-                {showCurrencyDropdown && (
-                  <div className="absolute top-full right-0 pt-1 z-50">
-                    <div className="bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-40">
-                      {(['USD', 'EUR', 'GBP'] as Currency[]).map((curr) => (
-                        <button
-                          key={curr}
-                          onClick={() => {
-                            setCurrency(curr);
-                            setShowCurrencyDropdown(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                            currency === curr
-                              ? 'bg-blue-50 text-blue-700 font-semibold'
-                              : 'text-gray-700'
-                          }`}
-                          aria-label={`Switch to ${curr}`}
-                        >
-                          <span>{CURRENCY_SYMBOLS[curr]} {curr}</span>
-                          {currency === curr && (
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Trial/Tier Badges - Hidden on mobile */}
             <div className="hidden sm:flex items-center gap-3">
               {/* Trial Countdown Badge */}
@@ -417,38 +363,6 @@ export default function Navigation() {
                 );
               }
             })}
-
-            {/* Mobile Currency Selector */}
-            {isSignedIn && (
-              <div className="sm:hidden pt-2 border-t border-gray-200 mt-2">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Currency
-                </div>
-                <div className="space-y-1">
-                  {(['USD', 'EUR', 'GBP'] as Currency[]).map((curr) => (
-                    <button
-                      key={curr}
-                      onClick={() => {
-                        setCurrency(curr);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${
-                        currency === curr
-                          ? 'bg-blue-50 text-blue-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                      aria-label={`Switch to ${curr}`}
-                    >
-                      <span>{CURRENCY_SYMBOLS[curr]} {curr}</span>
-                      {currency === curr && (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Mobile Action Buttons */}
             {isSignedIn ? (

@@ -3,13 +3,13 @@ import autoTable from 'jspdf-autotable';
 import { Trip } from '@/data/trips';
 import { analyzeTripInsights, findOptimizationOpportunities } from './utils';
 import { SubscriptionTier } from './subscription';
-import { Currency, formatCurrencyWithSymbol, CURRENCY_SYMBOLS } from './currency';
+import { formatCurrencyWithSymbol, convertCurrency } from './currencies';
 
 interface PDFOptions {
   includeBusinessIntelligence?: boolean;
   includeLogo?: boolean;
   agencyName?: string;
-  currency?: Currency;
+  currency?: string; // Currency code (e.g. 'USD', 'EUR', 'GBP', etc.)
 }
 
 export function generateTripReportPDF(
@@ -19,6 +19,16 @@ export function generateTripReportPDF(
   options: PDFOptions = {}
 ) {
   const currency = options.currency || 'USD';
+
+  // Helper function to convert amounts from USD to target currency
+  const convert = (amount: number): number => {
+    return convertCurrency(amount, 'USD', currency);
+  };
+
+  // Helper function to format with conversion
+  const formatAmount = (amount: number): string => {
+    return formatCurrencyWithSymbol(convert(amount), currency);
+  };
 
   // Single trip report - focused BI for this specific trip
   // All tiers use this generator with varying levels of BI detail
@@ -76,14 +86,14 @@ export function generateTripReportPDF(
   yPosition += 5;
 
   const costData = [
-    ['Flight', formatCurrencyWithSymbol(trip.Flight_Cost, currency), `${((trip.Flight_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Hotel', formatCurrencyWithSymbol(trip.Hotel_Cost, currency), `${((trip.Hotel_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Ground Transport', formatCurrencyWithSymbol(trip.Ground_Transport, currency), `${((trip.Ground_Transport / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Activities & Tours', formatCurrencyWithSymbol(trip.Activities_Tours, currency), `${((trip.Activities_Tours / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Meals', formatCurrencyWithSymbol(trip.Meals_Cost, currency), `${((trip.Meals_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Insurance', formatCurrencyWithSymbol(trip.Insurance_Cost, currency), `${((trip.Insurance_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Cruise', formatCurrencyWithSymbol(trip.Cruise_Cost, currency), `${((trip.Cruise_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
-    ['Other', formatCurrencyWithSymbol(trip.Other_Costs, currency), `${((trip.Other_Costs / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Flight', formatAmount(trip.Flight_Cost), `${((trip.Flight_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Hotel', formatAmount(trip.Hotel_Cost), `${((trip.Hotel_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Ground Transport', formatAmount(trip.Ground_Transport), `${((trip.Ground_Transport / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Activities & Tours', formatAmount(trip.Activities_Tours), `${((trip.Activities_Tours / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Meals', formatAmount(trip.Meals_Cost), `${((trip.Meals_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Insurance', formatAmount(trip.Insurance_Cost), `${((trip.Insurance_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Cruise', formatAmount(trip.Cruise_Cost), `${((trip.Cruise_Cost / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
+    ['Other', formatAmount(trip.Other_Costs), `${((trip.Other_Costs / trip.Trip_Total_Cost) * 100).toFixed(1)}%`],
   ];
 
   autoTable(doc, {
@@ -102,11 +112,11 @@ export function generateTripReportPDF(
   doc.setFont('helvetica', 'bold');
   const totalY = yPosition;
   doc.text('Total Trip Cost:', 14, totalY);
-  doc.text(formatCurrencyWithSymbol(trip.Trip_Total_Cost, currency), pageWidth - 14, totalY, { align: 'right' });
+  doc.text(formatAmount(trip.Trip_Total_Cost), pageWidth - 14, totalY, { align: 'right' });
   yPosition += 6;
 
   doc.text('Cost Per Traveler:', 14, yPosition);
-  doc.text(formatCurrencyWithSymbol(trip.Cost_Per_Traveler, currency), pageWidth - 14, yPosition, { align: 'right' });
+  doc.text(formatAmount(trip.Cost_Per_Traveler), pageWidth - 14, yPosition, { align: 'right' });
   yPosition += 10;
 
   // Commission Information
@@ -128,7 +138,7 @@ export function generateTripReportPDF(
     doc.text(commissionLabel, 14, yPosition);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(34, 197, 94);
-    doc.text(formatCurrencyWithSymbol(trip.Agency_Revenue, currency), pageWidth - 14, yPosition, { align: 'right' });
+    doc.text(formatAmount(trip.Agency_Revenue), pageWidth - 14, yPosition, { align: 'right' });
     doc.setTextColor(0, 0, 0);
     yPosition += 15;
   }
@@ -165,13 +175,13 @@ export function generateTripReportPDF(
     doc.setFont('helvetica', 'bold');
     doc.text('Cost Per Day:', 14, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(formatCurrencyWithSymbol(costPerDay, currency), 70, yPosition);
+    doc.text(formatAmount(costPerDay), 70, yPosition);
     yPosition += 6;
 
     doc.setFont('helvetica', 'bold');
     doc.text('Cost Per Traveler:', 14, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(formatCurrencyWithSymbol(trip.Cost_Per_Traveler, currency), 70, yPosition);
+    doc.text(formatAmount(trip.Cost_Per_Traveler), 70, yPosition);
     yPosition += 10;
 
     // Top Spending Categories - filter out zero values for proper pie chart rendering
@@ -195,7 +205,7 @@ export function generateTripReportPDF(
     categories.slice(0, 3).forEach((cat, idx) => {
       const percent = ((cat.amount / trip.Trip_Total_Cost) * 100).toFixed(1);
       doc.text(`${idx + 1}. ${cat.name}`, 18, yPosition);
-      doc.text(`${formatCurrencyWithSymbol(cat.amount, currency)} (${percent}%)`, pageWidth - 14, yPosition, { align: 'right' });
+      doc.text(`${formatAmount(cat.amount)} (${percent}%)`, pageWidth - 14, yPosition, { align: 'right' });
       yPosition += 5;
     });
 
@@ -284,7 +294,7 @@ export function generateTripReportPDF(
 
       // Draw value and percentage
       doc.setFont('helvetica', 'bold');
-      doc.text(`${formatCurrencyWithSymbol(cat.amount, currency)} (${percent}%)`, pageWidth - 14, yPosition, { align: 'right' });
+      doc.text(`${formatAmount(cat.amount)} (${percent}%)`, pageWidth - 14, yPosition, { align: 'right' });
 
       yPosition += 6;
     });
@@ -327,9 +337,9 @@ export function generateTripReportPDF(
     const costPerDay = trip.Trip_Total_Cost / tripDays;
     const commissionRate = trip.Agency_Revenue ? ((trip.Agency_Revenue / trip.Trip_Total_Cost) * 100).toFixed(1) : '0';
 
-    doc.text(`This ${tripDays}-day trip to ${trip.Destination_City}, ${trip.Destination_Country} generated ${formatCurrencyWithSymbol(trip.Agency_Revenue || 0, currency)} `, 18, yPosition);
+    doc.text(`This ${tripDays}-day trip to ${trip.Destination_City}, ${trip.Destination_Country} generated ${formatAmount(trip.Agency_Revenue || 0)} `, 18, yPosition);
     yPosition += 5;
-    doc.text(`in commission (${commissionRate}% of total trip cost). Daily cost: ${formatCurrencyWithSymbol(costPerDay, currency)}. Cost efficiency: ${insights.costEfficiency}.`, 18, yPosition);
+    doc.text(`in commission (${commissionRate}% of total trip cost). Daily cost: ${formatAmount(costPerDay)}. Cost efficiency: ${insights.costEfficiency}.`, 18, yPosition);
     yPosition += 12;
 
     // Key Metrics Grid
@@ -386,7 +396,7 @@ export function generateTripReportPDF(
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(139, 92, 246);
-    doc.text(formatCurrencyWithSymbol(insights.experienceInvestment, currency), 17 + (boxWidth + 5) * 2, kpiStartY + 14);
+    doc.text(formatAmount(insights.experienceInvestment), 17 + (boxWidth + 5) * 2, kpiStartY + 14);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
@@ -508,6 +518,17 @@ export function generateMultiTripReportPDF(
   options: PDFOptions = {}
 ) {
   const currency = options.currency || 'USD';
+
+  // Helper function to convert amounts from USD to target currency
+  const convert = (amount: number): number => {
+    return convertCurrency(amount, 'USD', currency);
+  };
+
+  // Helper function to format with conversion
+  const formatAmount = (amount: number): string => {
+    return formatCurrencyWithSymbol(convert(amount), currency);
+  };
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
@@ -543,9 +564,9 @@ export function generateMultiTripReportPDF(
   const summaryStats = [
     ['Total Trips:', trips.length.toString()],
     ['Total Travelers:', totalTravelers.toString()],
-    ['Total Trip Value:', formatCurrencyWithSymbol(totalRevenue, currency)],
-    ['Total Commission Earned:', formatCurrencyWithSymbol(totalCommission, currency)],
-    ['Average Trip Value:', formatCurrencyWithSymbol(totalRevenue / trips.length, currency)],
+    ['Total Trip Value:', formatAmount(totalRevenue)],
+    ['Total Commission Earned:', formatAmount(totalCommission)],
+    ['Average Trip Value:', formatAmount(totalRevenue / trips.length)],
   ];
 
   summaryStats.forEach(([label, value]) => {
@@ -568,8 +589,8 @@ export function generateMultiTripReportPDF(
     trip.Trip_ID,
     trip.Client_Name,
     `${trip.Destination_City}, ${trip.Destination_Country}`,
-    formatCurrencyWithSymbol(trip.Trip_Total_Cost, currency),
-    formatCurrencyWithSymbol(trip.Agency_Revenue || 0, currency)
+    formatAmount(trip.Trip_Total_Cost),
+    formatAmount(trip.Agency_Revenue || 0)
   ]);
 
   autoTable(doc, {
