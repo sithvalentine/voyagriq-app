@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit';
 import { alertWebhookFailure, alertPaymentFailure } from '@/lib/alerts';
 import { trackPaymentSuccess, trackPaymentFailure, trackSubscriptionCancelled } from '@/lib/analytics';
+import { sendPurchaseWelcomeEmail, sendRenewalEmail } from '@/lib/email';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -137,6 +138,20 @@ export async function POST(request: NextRequest) {
           session.currency || 'usd',
           billingCycle
         );
+
+        // Send welcome email after successful purchase
+        if (session.customer_details?.email) {
+          const tierName = tier ? tier.charAt(0).toUpperCase() + tier.slice(1) : 'Starter';
+          const billingInterval = billingCycle as 'monthly' | 'annual';
+
+          console.log('[stripe-webhook] Sending welcome email to:', session.customer_details.email);
+
+          await sendPurchaseWelcomeEmail(
+            session.customer_details.email,
+            tierName,
+            billingInterval
+          );
+        }
 
         break;
       }
@@ -294,10 +309,10 @@ export async function POST(request: NextRequest) {
 
         const customerId = invoice.customer as string;
 
-        // Find user by Stripe customer ID
+        // Find user by Stripe customer ID with email
         const { data: profile, error: findError } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, email, subscription_tier')
           .eq('stripe_customer_id', customerId)
           .single();
 
@@ -321,6 +336,37 @@ export async function POST(request: NextRequest) {
         } else {
           console.log('[stripe-webhook] Updated payment succeeded status for user:', profile.id);
         }
+
+        // Send renewal email (only if this is NOT the first invoice - billing_reason will be 'subscription_cycle')
+        // First invoices have billing_reason 'subscription_create', renewals have 'subscription_cycle'
+        const invoiceAny = invoice as any;
+        const subscriptionId = typeof invoiceAny.subscription === 'string' ? invoiceAny.subscription : null;
+        if (invoice.billing_reason === 'subscription_cycle' && profile.email && subscriptionId) {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            const tierName = profile.subscription_tier
+              ? profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)
+              : 'Starter';
+
+            // Determine billing interval from subscription
+            const billingInterval = subscription.items.data[0]?.price.recurring?.interval === 'year'
+              ? 'annual'
+              : 'monthly';
+
+            console.log('[stripe-webhook] Sending renewal email to:', profile.email);
+
+            await sendRenewalEmail(
+              profile.email,
+              tierName,
+              billingInterval as 'monthly' | 'annual',
+              invoice.amount_paid
+            );
+          } catch (emailError) {
+            console.error('[stripe-webhook] Error sending renewal email:', emailError);
+            // Don't fail the webhook if email fails
+          }
+        }
+
         break;
       }
 
