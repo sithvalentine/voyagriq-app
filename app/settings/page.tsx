@@ -15,6 +15,13 @@ export default function SettingsPage() {
 
   const settingsOptions = [
     {
+      title: 'Agency Settings',
+      description: 'Configure default commission rates, markups, and pricing rules',
+      href: '/settings/agency',
+      icon: '🏢',
+      tier: 'starter', // Available for all tiers
+    },
+    {
       title: 'Currency',
       description: 'Select your preferred currency for displaying costs',
       href: '/settings/currency',
