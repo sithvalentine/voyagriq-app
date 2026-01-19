@@ -216,10 +216,12 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_reports_user_id ON public.scheduled_rep
 -- 5. ADD: Additional Performance Indexes
 -- ============================================
 -- Add indexes for API keys and profiles based on Stripe fields
+-- Note: idx_api_keys_user_id, idx_api_keys_key_hash, and idx_api_keys_is_active
+-- may already exist from create_api_keys_table_fixed.sql migration
 
 CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON public.api_keys(user_id);
-CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON public.api_keys(api_key);
-CREATE INDEX IF NOT EXISTS idx_api_keys_is_active ON public.api_keys(user_id) WHERE last_used IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON public.api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_is_active ON public.api_keys(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_profiles_stripe_customer_id ON public.profiles(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_stripe_subscription_id ON public.profiles(stripe_subscription_id) WHERE stripe_subscription_id IS NOT NULL;
