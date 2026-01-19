@@ -29,6 +29,13 @@ export default function SettingsPage() {
       tier: 'starter', // Available for all tiers
     },
     {
+      title: 'Vendor Pricing',
+      description: 'Manage vendor-specific markups, discounts, and negotiated rates',
+      href: '/settings/vendors',
+      icon: '🏪',
+      tier: 'standard', // Available for Standard and Premium
+    },
+    {
       title: 'Team Management',
       description: 'Invite team members and manage permissions',
       href: '/settings/team',
