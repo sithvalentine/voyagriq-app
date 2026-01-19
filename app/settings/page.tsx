@@ -36,10 +36,17 @@ export default function SettingsPage() {
       tier: 'standard', // Available for Standard and Premium
     },
     {
+      title: 'Client Pricing',
+      description: 'Configure client-specific pricing for VIP clients and special agreements',
+      href: '/settings/clients',
+      icon: '👥',
+      tier: 'premium', // Available for Premium and Enterprise
+    },
+    {
       title: 'Team Management',
       description: 'Invite team members and manage permissions',
       href: '/settings/team',
-      icon: '👥',
+      icon: '🤝',
       tier: 'standard', // Available for Standard and Premium
     },
     {
