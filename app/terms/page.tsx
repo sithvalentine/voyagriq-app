@@ -11,7 +11,7 @@ export default function TermsOfService() {
               ← Back to Home
             </Link>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Terms of Service</h1>
-            <p className="text-gray-600">Last Updated: December 29, 2025</p>
+            <p className="text-gray-600">Last Updated: January 19, 2026</p>
           </div>
 
           {/* Content */}
@@ -186,7 +186,7 @@ export default function TermsOfService() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Limitation of Liability</h2>
               <p className="text-gray-700 mb-4">
-                TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRIP COST INSIGHTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+                TO THE MAXIMUM EXTENT PERMITTED BY LAW, VOYAGRIQ SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
                 SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY,
                 OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.
               </p>
@@ -276,7 +276,7 @@ export default function TermsOfService() {
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-gray-700">
                   <strong>VoyagrIQ</strong><br />
-                  Email: james@mintgoldwyn.com
+                  Email: james@voyagriq.com
                 </p>
               </div>
             </section>

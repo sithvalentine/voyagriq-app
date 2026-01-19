@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
               ← Back to Home
             </Link>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-            <p className="text-gray-600">Last Updated: December 29, 2025</p>
+            <p className="text-gray-600">Last Updated: January 19, 2026</p>
           </div>
 
           {/* Content */}
@@ -189,7 +189,7 @@ export default function PrivacyPolicy() {
 
               <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.3 Deletion</h3>
               <p className="text-gray-700 mb-4">
-                You can request deletion of your account and data by contacting us at james@mintgoldwyn.com.
+                You can request deletion of your account and data by contacting us at james@voyagriq.com.
                 Upon request, we will delete your personal information, except where retention is required by law.
               </p>
 
@@ -278,7 +278,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Right to Withdraw Consent:</strong> Withdraw consent at any time</li>
               </ul>
               <p className="text-gray-700 mb-4">
-                To exercise these rights, please contact us at james@mintgoldwyn.com.
+                To exercise these rights, please contact us at james@voyagriq.com.
               </p>
             </section>
 
@@ -294,7 +294,7 @@ export default function PrivacyPolicy() {
                 <li>Right to non-discrimination for exercising your rights</li>
               </ul>
               <p className="text-gray-700 mb-4">
-                To exercise these rights, please contact us at james@mintgoldwyn.com.
+                To exercise these rights, please contact us at james@voyagriq.com.
               </p>
             </section>
 
@@ -330,8 +330,8 @@ export default function PrivacyPolicy() {
                 <p className="text-gray-700">
                   <strong>VoyagrIQ</strong><br />
                   Privacy Team<br />
-                  Email: james@mintgoldwyn.com<br />
-                  Support: james@mintgoldwyn.com
+                  Email: james@voyagriq.com<br />
+                  Support: james@voyagriq.com
                 </p>
               </div>
               <p className="text-gray-700 mt-4">
@@ -351,7 +351,7 @@ export default function PrivacyPolicy() {
                 About Us
               </Link>
               <span className="text-gray-400">•</span>
-              <a href="mailto:james@mintgoldwyn.com" className="text-primary-600 hover:text-primary-700 font-medium">
+              <a href="mailto:james@voyagriq.com" className="text-primary-600 hover:text-primary-700 font-medium">
                 Contact Privacy Team
               </a>
             </div>
