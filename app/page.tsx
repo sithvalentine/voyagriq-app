@@ -77,7 +77,6 @@ export default function LandingPage() {
               <h3 className="text-2xl font-bold mb-2">Starter</h3>
               <div className="text-5xl font-bold text-blue-600 mb-2">${SUBSCRIPTION_TIERS.starter.price}</div>
               <div className="text-gray-500 mb-4">/month</div>
-              <p className="text-gray-600 mb-2 font-semibold">Up to 25 trips/month</p>
               <p className="text-sm text-gray-500 mb-6">For solo advisors</p>
               <ul className="text-left text-sm space-y-2 mb-6">
                 <li className="flex items-start">
@@ -124,7 +123,6 @@ export default function LandingPage() {
               <h3 className="text-2xl font-bold mb-2">Standard</h3>
               <div className="text-5xl font-bold text-purple-600 mb-2">${SUBSCRIPTION_TIERS.standard.price}</div>
               <div className="text-gray-500 mb-4">/month</div>
-              <p className="text-gray-600 mb-2 font-semibold">Up to 50 trips/month</p>
               <p className="text-sm text-gray-500 mb-6">For growing agencies</p>
               <ul className="text-left text-sm space-y-2 mb-6">
                 <li className="flex items-start">
@@ -176,7 +174,6 @@ export default function LandingPage() {
               <h3 className="text-2xl font-bold mb-2">Premium</h3>
               <div className="text-5xl font-bold text-amber-600 mb-2">${SUBSCRIPTION_TIERS.premium.price}</div>
               <div className="text-gray-500 mb-4">/month</div>
-              <p className="text-gray-600 mb-2 font-semibold">Up to 100 trips</p>
               <p className="text-sm text-gray-500 mb-6">For larger agencies</p>
               <ul className="text-left text-sm space-y-2 mb-6">
                 <li className="flex items-start">
