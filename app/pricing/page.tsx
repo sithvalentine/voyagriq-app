@@ -130,9 +130,6 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  Unlimited trips
-                </div>
                 <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.starter.dataRetention} data retention</div>
               </div>
 
@@ -200,9 +197,6 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  Unlimited trips
-                </div>
                 <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.standard.dataRetention} data retention</div>
               </div>
 
@@ -261,9 +255,6 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  Unlimited trips
-                </div>
                 <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.premium.dataRetention} data retention</div>
               </div>
 
@@ -309,9 +300,6 @@ export default function PricingPage() {
 
             <div className="p-6">
               <div className="mb-6">
-                <div className="text-2xl font-bold text-gray-900 mb-1">
-                  Unlimited trips
-                </div>
                 <div className="text-sm text-gray-600">{SUBSCRIPTION_TIERS.enterprise.dataRetention} data retention</div>
               </div>
 
