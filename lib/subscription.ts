@@ -28,7 +28,6 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     trialDays: 14,
     features: [
       '14-day free trial',
-      'Unlimited trips',
       '6 months data retention',
       'Single user account',
       'Core analytics dashboards',
@@ -63,7 +62,6 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     features: [
       'Everything in Starter',
       '14-day free trial',
-      'Unlimited trips',
       '2 years data retention',
       'Up to 10 team members',
       'Team collaboration & role permissions',
@@ -95,7 +93,6 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     hasTrial: false,
     features: [
       'Everything in Standard',
-      'Unlimited trips',
       '5 years data retention',
       'Up to 20 team members',
       'White-label PDF reports with your branding',
@@ -125,7 +122,6 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     contactForPricing: true,
     features: [
       'Everything in Premium',
-      'Unlimited trips',
       'Unlimited data retention',
       'Unlimited team members',
       'Custom tier configuration',
