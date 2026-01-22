@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit';
 import { alertWebhookFailure, alertPaymentFailure } from '@/lib/alerts';
 import { trackPaymentSuccess, trackPaymentFailure, trackSubscriptionCancelled } from '@/lib/analytics';
-import { sendPurchaseWelcomeEmail, sendRenewalEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendRenewalEmail } from '@/lib/email';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -146,11 +146,19 @@ export async function POST(request: NextRequest) {
 
           console.log('[stripe-webhook] Sending welcome email to:', session.customer_details.email);
 
-          await sendPurchaseWelcomeEmail(
-            session.customer_details.email,
-            tierName,
-            billingInterval
-          );
+          // Get user's first name from profile
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('first_name, trial_ends_at')
+            .eq('id', userId)
+            .single();
+
+          await sendWelcomeEmail({
+            firstName: userProfile?.first_name || session.customer_details.name?.split(' ')[0] || 'there',
+            email: session.customer_details.email,
+            tier: tierName,
+            trialEndsAt: userProfile?.trial_ends_at,
+          });
         }
 
         break;

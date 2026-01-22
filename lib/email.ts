@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { getWelcomeEmailTemplate, type WelcomeEmailData } from './email-templates';
 
 // Initialize Resend only if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -225,4 +226,19 @@ export async function sendRenewalEmail(email: string, tierName: string, billingI
   `;
 
   return sendEmail({ to: email, subject, html });
+}
+
+/**
+ * Send welcome email to new user with documentation links
+ */
+export async function sendWelcomeEmail(data: WelcomeEmailData) {
+  const { email } = data;
+  const { subject, html } = getWelcomeEmailTemplate(data);
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    from: 'VoyagrIQ <noreply@voyagriq.com>'
+  });
 }
