@@ -419,7 +419,7 @@ export default function PricingPage() {
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Advanced analytics</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
-                  <td className="py-4 px-4 text-center text-gray-400">—</td>
+                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                   <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
                 </tr>
@@ -434,7 +434,7 @@ export default function PricingPage() {
                   <td className="py-4 px-4 text-gray-700">White-label branding</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
                   <td className="py-4 px-4 text-center text-gray-400">—</td>
-                  <td className="py-4 px-4 text-center text-green-500 text-xl">✓</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">PDF Reports</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">Platform-wide</td>
                 </tr>
                 <tr>
@@ -486,7 +486,7 @@ export default function PricingPage() {
                 Are trips really unlimited?
               </h3>
               <p className="text-gray-600">
-                Yes! All tiers offer unlimited trip tracking. The main differences between tiers are data retention periods, team size limits, and access to advanced features like bulk import, API access, and white-label branding.
+                Yes! All tiers offer unlimited trip tracking. The main differences between tiers are data retention periods, team size limits, and access to advanced features like bulk import, advanced analytics (Standard+), white-label branding (Premium+), and API access (Premium+).
               </p>
             </div>
 

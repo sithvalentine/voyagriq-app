@@ -73,7 +73,7 @@ export default function TermsOfService() {
               </p>
               <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
                 <li><strong>Starter:</strong> $49/month or $588/year - Unlimited trips, 6 months data retention, single user, core analytics</li>
-                <li><strong>Standard:</strong> $99/month or $1,188/year - Unlimited trips, 2 years data retention, up to 10 users, business intelligence, scheduled reports</li>
+                <li><strong>Standard:</strong> $99/month or $1,188/year - Unlimited trips, 2 years data retention, up to 10 users, advanced analytics, business intelligence, scheduled reports</li>
                 <li><strong>Premium:</strong> $199/month or $2,388/year - Unlimited trips, 5 years data retention, up to 20 team members, API access, white-label branding, priority support</li>
                 <li><strong>Enterprise:</strong> Custom pricing - Unlimited trips, unlimited data retention, unlimited team members, custom tier configuration, white-label platform, dedicated infrastructure</li>
               </ul>

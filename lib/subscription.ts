@@ -73,6 +73,7 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
       'Custom client tags & organization',
       'Vendor tracking',
       'Agency performance comparison',
+      'Advanced analytics & insights',
       'Priority email support (24hr response)',
     ],
     restrictions: [
@@ -101,7 +102,8 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
       'Advanced export options',
       'Custom client tags & fields',
       'Multi-client portfolio management',
-      'Advanced analytics & insights',
+      'Client-specific pricing overrides',
+      'Vendor pricing rules & automation',
       'Priority support (4-hour response)',
       'Dedicated account manager',
       'Quarterly business reviews',
