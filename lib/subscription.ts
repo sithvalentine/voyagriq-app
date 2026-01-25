@@ -32,8 +32,7 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
       'Single user account',
       'Core analytics dashboards',
       'Standard reports',
-      'Export to CSV',
-      'Basic PDF reports',
+      'Export to CSV, Excel & PDF',
       'Cost breakdown analysis',
       'Cost per traveler metrics',
       'Commission tracking',
@@ -42,7 +41,6 @@ export const SUBSCRIPTION_TIERS: Record<SubscriptionTier, TierFeatures> = {
     restrictions: [
       'Data retained for 6 months only',
       'Single user only',
-      'CSV export only',
       'No bulk import',
       'No custom tags',
       'No scheduled reports',

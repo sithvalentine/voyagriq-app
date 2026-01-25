@@ -390,7 +390,7 @@ export default function PricingPage() {
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Export options</td>
-                  <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV</td>
+                  <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV, Excel, PDF</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV, Excel, PDF</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">CSV, Excel, PDF</td>
                   <td className="py-4 px-4 text-center font-semibold text-gray-900">All + Custom</td>

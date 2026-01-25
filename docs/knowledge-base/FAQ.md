@@ -212,7 +212,7 @@ See [User Guide - Client Pricing](../USER_GUIDE.md#managing-client-pricing)
 
 | Plan | Export Formats |
 |------|----------------|
-| **Starter** | CSV (Excel-compatible) |
+| **Starter** | CSV, Excel, PDF |
 | **Standard** | CSV, Excel, PDF |
 | **Premium** | CSV, Excel, PDF (white-labeled) |
 | **Enterprise** | All formats + custom exports |
