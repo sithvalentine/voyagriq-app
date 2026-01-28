@@ -39,16 +39,19 @@ export function TierProvider({ children }: { children: ReactNode }) {
   const [devMode, setDevMode] = useState(false);
   const [testMode, setTestMode] = useState(false);
 
-  // Check for test mode on mount (client-side only) - ONLY on localhost
+  // Check for test mode or demo mode on mount (client-side only) - ONLY on localhost
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const isTestMode = isLocalhost && localStorage.getItem('voyagriq-dev-mode') === 'true';
+      const isTestMode = isLocalhost && (
+        localStorage.getItem('voyagriq-dev-mode') === 'true' ||
+        localStorage.getItem('voyagriq-demo-mode') === 'true'
+      );
       setTestMode(isTestMode);
     }
   }, []);
 
-  // Check if user is signed in OR in test mode
+  // Check if user is signed in OR in test/demo mode
   const isSignedIn = !!user || testMode;
 
   // Calculate trial status
@@ -68,27 +71,38 @@ export function TierProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from Supabase when user changes
   useEffect(() => {
     async function loadProfile() {
-      // Check for test mode first (bypasses all Supabase checks) - ONLY on localhost
+      // Check for test mode or demo mode first (bypasses all Supabase checks) - ONLY on localhost
       const isLocalhost = typeof window !== 'undefined' &&
                           (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const testMode = isLocalhost &&
                        typeof window !== 'undefined' &&
                        localStorage.getItem('voyagriq-dev-mode') === 'true';
+      const demoMode = isLocalhost &&
+                       typeof window !== 'undefined' &&
+                       localStorage.getItem('voyagriq-demo-mode') === 'true';
 
-      if (testMode) {
-        // In dev mode, check for saved tier in localStorage
-        const savedTier = localStorage.getItem('voyagriq-dev-tier') as SubscriptionTier;
+      if (testMode || demoMode) {
+        // In dev/demo mode, check for saved tier in localStorage
+        const storageKey = demoMode ? 'voyagriq-demo-tier' : 'voyagriq-dev-tier';
+        const savedTier = localStorage.getItem(storageKey) as SubscriptionTier;
         if (savedTier && (savedTier === 'starter' || savedTier === 'standard' || savedTier === 'premium' || savedTier === 'enterprise')) {
           setCurrentTierState(savedTier);
         } else {
           // Default to premium if no saved tier
           setCurrentTierState('premium');
-          localStorage.setItem('voyagriq-dev-tier', 'premium');
+          localStorage.setItem(storageKey, 'premium');
         }
         setTrialStartDate(new Date());
         setHasActiveSubscription(true);
-        setUserName('Test User');
-        setUserEmail('test@example.com');
+
+        if (demoMode) {
+          setUserName('Demo User');
+          setUserEmail('demo@voyagriq.com');
+        } else {
+          setUserName('Test User');
+          setUserEmail('test@example.com');
+        }
+
         setProfileLoading(false);
         return;
       }

@@ -33,17 +33,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     localStorage.getItem('voyagriq-dev-mode') === 'true';
     const bypassLogin = devMode && localStorage.getItem('voyagriq-bypass-login') === 'true';
 
-    if (bypassLogin) {
-      // Create a mock user and session for dev mode
+    // Also check for demo mode
+    const demoMode = isLocalhost &&
+                     typeof window !== 'undefined' &&
+                     localStorage.getItem('voyagriq-demo-mode') === 'true';
+
+    if (bypassLogin || demoMode) {
+      // Create a mock user and session for dev/demo mode
       // Use a fixed ID to prevent hydration errors
-      const mockUser = {
-        id: 'dev-user-12345',
-        email: 'dev@voyagriq.local',
-        user_metadata: { full_name: 'Dev User' },
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: '2024-01-01T00:00:00.000Z',
-      } as User;
+      const storedDemoUser = demoMode && typeof window !== 'undefined'
+        ? localStorage.getItem('voyagriq-demo-user')
+        : null;
+
+      let mockUser: User;
+      if (storedDemoUser) {
+        try {
+          mockUser = JSON.parse(storedDemoUser) as User;
+        } catch {
+          mockUser = {
+            id: 'demo-user-123',
+            email: 'demo@voyagriq.com',
+            user_metadata: { full_name: 'Demo User', first_name: 'Demo', last_name: 'User' },
+            app_metadata: {},
+            aud: 'authenticated',
+            created_at: '2024-01-01T00:00:00.000Z',
+          } as User;
+        }
+      } else {
+        mockUser = {
+          id: 'dev-user-12345',
+          email: 'dev@voyagriq.local',
+          user_metadata: { full_name: 'Dev User' },
+          app_metadata: {},
+          aud: 'authenticated',
+          created_at: '2024-01-01T00:00:00.000Z',
+        } as User;
+      }
 
       const mockSession = {
         access_token: 'dev-token',
@@ -56,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(mockUser);
       setSession(mockSession);
       setLoading(false);
-      console.log('🔧 Dev Mode: Login bypassed - using mock user');
+      console.log(demoMode ? '🎭 Demo Mode: Using mock user' : '🔧 Dev Mode: Login bypassed - using mock user');
       return;
     }
 
