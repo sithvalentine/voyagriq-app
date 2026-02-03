@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { stripe } from '@/lib/stripe';
+import { sendEmail } from '@/lib/email';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -190,28 +192,144 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Task 5: Health checks
+    // Task 5: Comprehensive Health Checks
     const healthCheckStart = Date.now();
-    try {
-      // Check database connection
-      const { error: dbError } = await supabase.from('profiles').select('count').limit(1);
-      if (dbError) throw new Error('Database health check failed');
+    const healthResults: string[] = [];
+    let healthCheckFailed = false;
 
-      // Check if Stripe webhook is working (check recent webhook calls)
-      // This is a basic check - you might want to add more detailed health checks
+    try {
+      // 1. Supabase Database Health Check
+      try {
+        const { data, error: dbError } = await supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
+
+        if (dbError) throw new Error(`Database query failed: ${dbError.message}`);
+        healthResults.push('✓ Supabase database connection');
+      } catch (dbErr: any) {
+        healthResults.push(`✗ Supabase database: ${dbErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 2. Supabase Auth Health Check
+      try {
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+        });
+
+        if (authError) throw new Error(`Auth service error: ${authError.message}`);
+        healthResults.push('✓ Supabase authentication service');
+      } catch (authErr: any) {
+        healthResults.push(`✗ Supabase auth: ${authErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 3. Stripe API Health Check
+      try {
+        // Test Stripe connection by retrieving account info
+        const account = await stripe.accounts.retrieve();
+        if (!account || !account.id) throw new Error('Invalid account response');
+        healthResults.push(`✓ Stripe API (Account: ${account.business_profile?.name || account.id})`);
+      } catch (stripeErr: any) {
+        healthResults.push(`✗ Stripe API: ${stripeErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 4. Stripe Price IDs Check
+      try {
+        const priceIds = [
+          process.env.STRIPE_PRICE_STARTER,
+          process.env.STRIPE_PRICE_STANDARD,
+          process.env.STRIPE_PRICE_PREMIUM,
+          process.env.STRIPE_PRICE_STARTER_ANNUAL,
+          process.env.STRIPE_PRICE_STANDARD_ANNUAL,
+          process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+        ];
+
+        const missingPrices = priceIds.filter(id => !id);
+        if (missingPrices.length > 0) {
+          throw new Error(`${missingPrices.length} price IDs not configured`);
+        }
+
+        // Verify at least one price ID actually exists in Stripe
+        const testPrice = await stripe.prices.retrieve(process.env.STRIPE_PRICE_STARTER!);
+        if (!testPrice) throw new Error('Price ID verification failed');
+
+        healthResults.push('✓ Stripe price IDs configured');
+      } catch (priceErr: any) {
+        healthResults.push(`✗ Stripe prices: ${priceErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 5. Email Service (Resend) Health Check
+      try {
+        if (!process.env.RESEND_API_KEY) {
+          throw new Error('RESEND_API_KEY not configured');
+        }
+        // Note: We don't send a test email to avoid spam
+        // Just verify the API key is set
+        healthResults.push('✓ Email service (Resend API key configured)');
+      } catch (emailErr: any) {
+        healthResults.push(`✗ Email service: ${emailErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 6. Environment Variables Check
+      try {
+        const requiredEnvVars = [
+          'NEXT_PUBLIC_SUPABASE_URL',
+          'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+          'SUPABASE_SERVICE_ROLE_KEY',
+          'STRIPE_SECRET_KEY',
+          'STRIPE_WEBHOOK_SECRET',
+          'CRON_SECRET',
+        ];
+
+        const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+        if (missingVars.length > 0) {
+          throw new Error(`Missing: ${missingVars.join(', ')}`);
+        }
+
+        healthResults.push('✓ Environment variables complete');
+      } catch (envErr: any) {
+        healthResults.push(`✗ Environment vars: ${envErr.message}`);
+        healthCheckFailed = true;
+      }
+
+      // 7. Webhook Events Log Check (verify recent activity)
+      try {
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+        const { data: recentWebhooks, error: webhookError } = await supabase
+          .from('webhook_events')
+          .select('count')
+          .gte('created_at', oneDayAgo.toISOString());
+
+        if (webhookError) throw webhookError;
+
+        const webhookCount = recentWebhooks?.[0]?.count || 0;
+        healthResults.push(`✓ Webhook logging active (${webhookCount} events last 24h)`);
+      } catch (webhookErr: any) {
+        // This is a warning, not a critical error
+        healthResults.push(`⚠ Webhook logging: ${webhookErr.message}`);
+      }
 
       results.push({
-        task: 'Health Checks',
-        status: 'success',
+        task: 'Comprehensive Health Checks',
+        status: healthCheckFailed ? 'error' : 'success',
         duration: Date.now() - healthCheckStart,
-        details: 'All systems operational',
+        details: healthResults.join('\n'),
       });
     } catch (error: any) {
       results.push({
-        task: 'Health Checks',
+        task: 'Comprehensive Health Checks',
         status: 'error',
         duration: Date.now() - healthCheckStart,
         error: error.message,
+        details: healthResults.join('\n'),
       });
     }
 
@@ -273,9 +391,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function sendMaintenanceReport(results: MaintenanceResult[], duration: number) {
-  // TODO: Implement email notification
-  // You can use Resend, SendGrid, or another email service
-  // For now, just log the report
+  // Log to console always
   console.log('=== MAINTENANCE REPORT ===');
   console.log(`Total Duration: ${duration}ms (${(duration / 1000 / 60).toFixed(2)} minutes)`);
   console.log('\nResults:');
@@ -287,4 +403,142 @@ async function sendMaintenanceReport(results: MaintenanceResult[], duration: num
     if (result.error) console.log(`  Error: ${result.error}`);
   });
   console.log('\n=========================');
+
+  // Check if any tasks failed
+  const failedTasks = results.filter(r => r.status === 'error');
+  const hasFailures = failedTasks.length > 0;
+
+  // Get notification email from environment or use default
+  const notificationEmail = process.env.MAINTENANCE_ALERT_EMAIL || 'james@voyagriq.com';
+
+  // Only send email if there are failures or if it's configured to always send
+  const alwaysSendReport = process.env.MAINTENANCE_ALWAYS_EMAIL === 'true';
+
+  if (!hasFailures && !alwaysSendReport) {
+    console.log('✓ All tasks successful. No alert email sent.');
+    return;
+  }
+
+  try {
+    // Build HTML email
+    const statusEmoji = hasFailures ? '🚨' : '✅';
+    const statusText = hasFailures ? 'FAILED' : 'SUCCESS';
+    const statusColor = hasFailures ? '#dc2626' : '#16a34a';
+
+    let tasksHtml = '';
+    results.forEach((result) => {
+      const statusIcon = result.status === 'success' ? '✅' : result.status === 'error' ? '❌' : '⚠️';
+      const rowColor = result.status === 'error' ? '#fef2f2' : '#ffffff';
+
+      tasksHtml += `
+        <tr style="background-color: ${rowColor};">
+          <td style="padding: 12px; border: 1px solid #e5e7eb;">
+            ${statusIcon} ${result.task}
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">
+            <span style="color: ${result.status === 'error' ? '#dc2626' : '#16a34a'}; font-weight: bold;">
+              ${result.status.toUpperCase()}
+            </span>
+          </td>
+          <td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center;">
+            ${result.duration}ms
+          </td>
+        </tr>
+        ${result.details ? `
+        <tr style="background-color: ${rowColor};">
+          <td colspan="3" style="padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
+            ${result.details.split('\n').join('<br>')}
+          </td>
+        </tr>
+        ` : ''}
+        ${result.error ? `
+        <tr style="background-color: #fef2f2;">
+          <td colspan="3" style="padding: 8px 12px; border: 1px solid #e5e7eb; font-size: 12px; color: #dc2626;">
+            <strong>Error:</strong> ${result.error}
+          </td>
+        </tr>
+        ` : ''}
+      `;
+    });
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px;">${statusEmoji} VoyagrIQ Maintenance Report</h1>
+      <p style="margin: 10px 0 0; font-size: 14px; opacity: 0.9;">
+        ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+      </p>
+    </div>
+
+    <!-- Status Badge -->
+    <div style="background-color: white; padding: 20px; text-align: center; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+      <div style="display: inline-block; background-color: ${statusColor}; color: white; padding: 8px 24px; border-radius: 20px; font-weight: bold; font-size: 16px;">
+        ${statusText}
+      </div>
+      <p style="margin: 12px 0 0; color: #6b7280; font-size: 14px;">
+        Total Duration: ${(duration / 1000 / 60).toFixed(2)} minutes
+      </p>
+    </div>
+
+    <!-- Tasks Table -->
+    <div style="background-color: white; padding: 20px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+      <h2 style="margin: 0 0 16px; font-size: 18px; color: #111827;">Task Results</h2>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="background-color: #f9fafb;">
+            <th style="padding: 12px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600; color: #374151;">Task</th>
+            <th style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #374151;">Status</th>
+            <th style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #374151;">Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tasksHtml}
+        </tbody>
+      </table>
+    </div>
+
+    ${hasFailures ? `
+    <!-- Warning -->
+    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 20px;">
+      <p style="margin: 0; color: #991b1b; font-size: 14px;">
+        <strong>⚠️ Action Required:</strong> One or more maintenance tasks failed. Please review the errors above and take corrective action.
+      </p>
+    </div>
+    ` : ''}
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 20px 0; color: #6b7280; font-size: 12px;">
+      <p style="margin: 0;">This is an automated maintenance report from VoyagrIQ</p>
+      <p style="margin: 8px 0 0;">Running every Sunday at 10:00 AM UTC</p>
+    </div>
+
+  </div>
+</body>
+</html>
+    `;
+
+    const subject = hasFailures
+      ? `🚨 VoyagrIQ Maintenance Alert: ${failedTasks.length} Task(s) Failed`
+      : '✅ VoyagrIQ Weekly Maintenance Report';
+
+    await sendEmail({
+      to: notificationEmail,
+      subject,
+      html,
+      from: 'VoyagrIQ Maintenance <noreply@voyagriq.com>',
+    });
+
+    console.log(`✓ Maintenance report sent to ${notificationEmail}`);
+  } catch (emailError: any) {
+    console.error('Failed to send maintenance report email:', emailError);
+  }
 }
